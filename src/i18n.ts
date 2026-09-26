@@ -220,6 +220,12 @@ const ja = {
   aboutLine2: 'そんなにジロジロ見てないで、さっさとゲームを始めるニャ！',
   aboutLine3: '図鑑、ちゃんと埋めてるかニャ？ボクの渾身のコメントを読めニャ！',
   aboutLine4: 'たまに描き始めがバナナに見える？……気のせいニャ！',
+  achButton: '実績',
+  achTitle: '実績',
+  achUnlocked: '🏆 実績解除！',
+  achProgress: '{got}/{total} 獲得 - {pct}%',
+  achSecret: '隠し実績',
+  achSecretHint: 'ヒミツの実績ニャ。条件は解除してのお楽しみ！',
 } as const;
 
 type Dict = { [K in keyof typeof ja]: string };
@@ -444,6 +450,12 @@ const en: Dict = {
   aboutLine2: 'Quit staring at me and start the game already, nya!',
   aboutLine3: 'Are you filling in the Dex? Go read my heartfelt comments, nya!',
   aboutLine4: 'My first strokes sometimes look like a banana? ...Must be your imagination, nya!',
+  achButton: 'Achievements',
+  achTitle: 'Achievements',
+  achUnlocked: '🏆 Achievement unlocked!',
+  achProgress: '{got}/{total} earned - {pct}%',
+  achSecret: 'Secret',
+  achSecretHint: "A secret, nya! Unlock it to find out.",
 };
 
 export const STRINGS: Record<Lang, Dict> = { ja, en };

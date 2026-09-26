@@ -1,6 +1,7 @@
 import { sound } from '../audio/SoundManager';
 import { QUIZZES, type Choices, type Localized, type Quiz } from '../data/quizzes';
 import { recordDexCorrect } from './dex';
+import { checkAchievements } from '../services/achievements';
 
 export const QUESTIONS_PER_GAME = 10;
 export const TIME_LIMIT_MS = 10_000;
@@ -335,6 +336,14 @@ function finish(s: GameState) {
     }
   }
   sound.fanfare();
+  checkAchievements({
+    type: 'result',
+    mode: s.mode,
+    correctCount: s.correctCount,
+    questions: s.mode === 'score' ? s.questions.length : s.index + 1,
+    // Wrong picks and timeouts both count as misses.
+    misses: s.wrongCount + s.records.filter((r) => r.outcome === 'timeout').length,
+  });
 }
 
 function advance(s: GameState) {
@@ -441,7 +450,19 @@ export function submitAnswer(s: GameState, choice: number): boolean {
     beginReveal(s, 'correct');
     s.confettiId++;
     s.records.push({ outcome: 'correct', timeMs: s.elapsed, points, misses: s.wrongPicks.length, critical });
-    if (recordDexCorrect(q.quiz.id, s.elapsed)) s.newDex.push(q.quiz.id);
+    if (recordDexCorrect(q.quiz.id, s.elapsed)) {
+      s.newDex.push(q.quiz.id);
+      checkAchievements({ type: 'dex' });
+    }
+    checkAchievements({
+      type: 'answer',
+      mode: s.mode,
+      correct: true,
+      timeMs: s.elapsed,
+      remainingMs: s.mode === 'timeattack' ? null : remaining,
+      combo: s.combo,
+      correctCount: s.correctCount,
+    });
     if (critical) {
       s.critId++;
       sound.critical(s.combo);
@@ -454,6 +475,7 @@ export function submitAnswer(s: GameState, choice: number): boolean {
     s.lockRemaining = s.mode === 'timeattack' ? TA_PENALTY_MS : PENALTY_MS;
     s.shakeId++;
     sound.wrong();
+    checkAchievements({ type: 'answer', mode: s.mode, correct: false, timeMs: s.elapsed, remainingMs: null });
     breakCombo(s);
     if (s.mode === 'sudden') {
       loseLife(s);

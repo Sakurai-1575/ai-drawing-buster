@@ -14,6 +14,8 @@ import { useLang } from './hooks/useLang';
 import { STRINGS } from './i18n';
 import { SettingsProvider } from './settings/SettingsContext';
 import { DexProvider } from './dex/DexContext';
+import { AchievementToaster } from './components/AchievementToaster';
+import { checkAchievements } from './services/achievements';
 
 /**
  * Dev-only Steam capsule generator, opened at `/#capsules`.
@@ -65,6 +67,10 @@ export default function App() {
   useEffect(() => {
     if (!multiOpen) bgm.setScene(state.phase === 'playing' ? 'game' : 'title');
   }, [multiOpen, state.phase]);
+
+  // Grant Dex achievements retroactively for progress made before achievements existed.
+  // (Runs after the toaster's own effect has subscribed, so these still get a toast.)
+  useEffect(() => checkAchievements({ type: 'dex' }), []);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -180,6 +186,7 @@ export default function App() {
 
               {state.phase === 'result' && <ResultScreen state={state} t={t} lang={lang} onRetry={retry} onTitle={quitToTitle} />}
             </DexProvider>
+            <AchievementToaster t={t} lang={lang} />
           </SettingsProvider>
         </div>
       </div>

@@ -192,6 +192,13 @@ class SoundManager {
   click() {
     this.tone(660, 0, 0.05, 'square', 0.15);
   }
+
+  /** Achievement unlocked: a quick rising chime (G5 → E6) with a shimmer on top. */
+  achievement() {
+    [783.99, 1046.5, 1318.5].forEach((f, i) => this.tone(f, i * 0.08, 0.16, 'square', 0.2));
+    this.tone(1568, 0.24, 0.5, 'triangle', 0.22);
+    [3136, 3951, 4699].forEach((f, i) => this.tone(f, 0.26 + i * 0.05, 0.1, 'sine', 0.07));
+  }
 }
 
 function readSeVolume() {

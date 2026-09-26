@@ -6,6 +6,10 @@ import { DrawingCanvas } from './DrawingCanvas';
 import { MascotCharacter } from './MascotCharacter';
 import { RankingModal } from './TitleModals';
 import { AboutModal } from './AboutModal';
+import { AchievementsModal } from './AchievementsModal';
+import { ACHIEVEMENTS, checkAchievements, loadAchievements, onAchievementsChange } from '../services/achievements';
+
+const countUnlocked = () => Object.keys(loadAchievements().unlocked).length;
 import { SettingsButton } from '../settings/SettingsButton';
 import { DexButton } from '../dex/DexButton';
 
@@ -27,6 +31,14 @@ const HOW_TO_TAG_BG = ['bg-sky-300', 'bg-amber-300', 'bg-emerald-300', 'bg-rose-
 export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultiplayer }: Props) {
   const [rankingOpen, setRankingOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [achievedCount, setAchievedCount] = useState(countUnlocked);
+  useEffect(() => onAchievementsChange(() => setAchievedCount(countUnlocked())), []);
+  const openAchievements = () => {
+    sound.unlock();
+    sound.click();
+    setAchievementsOpen(true);
+  };
   const openRanking = () => {
     sound.unlock();
     sound.click();
@@ -35,17 +47,32 @@ export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultipla
   const openAbout = () => {
     sound.unlock();
     sound.click();
+    checkAchievements({ type: 'busterClick' });
     setAboutOpen(true);
   };
   const close = () => {
     sound.click();
     setRankingOpen(false);
     setAboutOpen(false);
+    setAchievementsOpen(false);
   };
 
   return (
     <div className="relative flex h-full w-full items-center justify-center gap-14 p-10">
       <div className="absolute right-6 top-6 flex items-center gap-4">
+        <button
+          type="button"
+          tabIndex={-1}
+          data-testid="achievements-button"
+          onClick={openAchievements}
+          className="comic-btn flex items-center gap-2 bg-amber-300 px-4 py-1.5 text-lg transition-transform hover:scale-110"
+        >
+          <span>🏆</span>
+          {t.achButton}
+          <span className="rounded-md border-2 border-slate-900 bg-white px-1.5 text-sm tabular-nums">
+            {achievedCount}/{ACHIEVEMENTS.length}
+          </span>
+        </button>
         <SettingsButton t={t} />
       </div>
 
@@ -106,6 +133,7 @@ export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultipla
 
       {rankingOpen && <RankingModal t={t} lang={lang} onClose={close} />}
       {aboutOpen && <AboutModal t={t} onClose={close} />}
+      {achievementsOpen && <AchievementsModal t={t} lang={lang} onClose={close} />}
     </div>
   );
 }

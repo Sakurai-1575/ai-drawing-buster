@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import type { Dict } from '../i18n';
 import { MASCOT_EXPRESSIONS, type MascotExpression } from '../mascotLines';
+import { checkAchievements } from '../services/achievements';
 import { MascotCharacter } from './MascotCharacter';
 import { Modal } from './TitleModals';
 
@@ -36,6 +37,7 @@ export function AboutModal({ t, onClose }: { t: Dict; onClose: () => void }) {
           data-expression={expression}
           onClick={() => {
             sound.click();
+            checkAchievements({ type: 'busterClick' });
             setExpression(nextExpression);
           }}
           className="paper-bg flex w-[210px] shrink-0 cursor-pointer flex-col items-center justify-end gap-2 rounded-2xl border-4 border-slate-900 px-3 pb-2 pt-6"

@@ -54,6 +54,7 @@ import {
 } from '../net/protocol';
 import { GuestRoom, HostRoom, RoomError } from '../net/room';
 import { recordDexCorrect } from '../game/dex';
+import { checkAchievements } from '../services/achievements';
 import { loadSavedTopics } from './customTopics';
 
 export const QUIZ_BY_ID = new Map<string, Quiz>(QUIZZES.map((q) => [q.id, q]));
@@ -511,14 +512,18 @@ export function useMatch() {
             const drawing = v.drawRound?.drawerId === v.me;
             if (v.mine.correctSlot === null && !drawing) sound.timeUp();
             // Mode B: log a guessed AI quiz in the Buster Dex (different clock, so no best time).
-            if (msg.quizId && v.mine.correctSlot !== null && !drawing) recordDexCorrect(msg.quizId, null);
+            if (msg.quizId && v.mine.correctSlot !== null && !drawing && recordDexCorrect(msg.quizId, null)) checkAchievements({ type: 'dex' });
             return { ...v, roundEnd: { answerSlot: msg.answerSlot, results: msg.results, at: Date.now() }, players: msg.standings };
           });
           return;
-        case 'matchEnd':
+        case 'matchEnd': {
           sound.fanfare();
+          // Online rounds aren't counted per player here; any points means at least one hit (or a guessed drawing).
+          const myScore = msg.standings.find((p) => p.id === viewRef.current.me)?.score ?? 0;
+          checkAchievements({ type: 'result', mode: 'online', correctCount: myScore > 0 ? 1 : 0, questions: 0, misses: 0 });
           update((v) => ({ ...v, phase: 'result', players: msg.standings, round: null, drawRound: null, myTopic: null, roundEnd: null }));
           return;
+        }
         case 'lobby':
           update((v) => ({ ...v, phase: 'lobby', players: msg.players, round: null, drawRound: null, myTopic: null, sketch: [], roundEnd: null, status: {}, toasts: [] }));
           return;
@@ -1043,10 +1048,11 @@ export function useMatch() {
         }));
         if (correct) {
           sound.correct();
-          recordDexCorrect(v.round.quizId, elapsed);
+          if (recordDexCorrect(v.round.quizId, elapsed)) checkAchievements({ type: 'dex' });
         } else {
           sound.wrong();
         }
+        checkAchievements({ type: 'answer', mode: 'online', correct, timeMs: elapsed, remainingMs: correct ? TIME_LIMIT_MS - elapsed : null });
       } else if (v.drawRound) {
         // Mode B: guessers don't know the answer; wait for the host's verdict.
         if (v.drawRound.drawerId === v.me || elapsed > v.drawRound.durationMs) return;
