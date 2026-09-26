@@ -1,0 +1,6 @@
+node_modules
+dist
+*.local
+src-tauri/target
+.vercel
+.env*
