@@ -22,7 +22,7 @@ npm run build    # typecheck + production build to dist/
 | Mode | Rules | Personal best (localStorage) |
 | --- | --- | --- |
 | 🃏 Score Attack | 10 random quizzes, 10s each, score = time left × combo | `adb.bestScore` (score) |
-| 🔥 Sudden Death | 3 lives; a wrong answer or a 10s timeout costs one. All 150 quizzes, no repeats. The AI speeds up: Q1–10 1.0x, Q11–20 1.15x, Q21–30 1.3x, Q31+ 1.5x | `adb.best.sudden` (survived) |
+| 🔥 Sudden Death | 3 lives; a wrong answer or a 10s timeout costs one. All 200 quizzes, no repeats. The AI speeds up: Q1–10 1.0x, Q11–20 1.15x, Q21–30 1.3x, Q31+ 1.5x | `adb.best.sudden` (survived) |
 | ⚡ Time Attack | One 3-minute clock, no per-question limit. Wrong answer = 1.5s input lock; 0.3s to the next drawing after a hit. Score = (1,000 + speed bonus) × combo | `adb.best.timeattack` (correct) |
 
 Every correct answer in any mode registers in the Buster Dex.
@@ -30,8 +30,8 @@ Every correct answer in any mode registers in the Buster Dex.
 ## Layout
 ```
 src/
-  data/quizzes.ts        150 AI line-drawing quizzes, tagged with a genre, each with a Buster Dex comment (normalized stroke data + shape helpers)
-  data/drawTopics.ts     105 Mode B draw-only topics (15 per genre); Mode B draws from both = 255
+  data/quizzes.ts        200 AI line-drawing quizzes, tagged with a genre, each with a Buster Dex comment (normalized stroke data + shape helpers)
+  data/drawTopics.ts     105 Mode B draw-only topics (15 per genre); Mode B draws from both = 305
   data/genres.ts         The 7 genres and their JA/EN labels
   audio/SoundManager.ts  Web Audio synth SFX
   game/engine.ts         Game rules, scoring, ranks (pure state + sounds)

@@ -4,3 +4,5 @@ dist
 src-tauri/target
 .vercel
 .env*
+
+.vercel
