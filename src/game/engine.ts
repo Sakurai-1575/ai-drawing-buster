@@ -6,7 +6,12 @@ import { checkAchievements } from '../services/achievements';
 export const QUESTIONS_PER_GAME = 10;
 export const TIME_LIMIT_MS = 10_000;
 export const MAX_POINTS = TIME_LIMIT_MS;
-export const PENALTY_MS = 2_000;
+/** Wrong answer: answer lockout in score attack and online matches. The drawing keeps going meanwhile. */
+export const PENALTY_MS = 3_000;
+/** Score attack: points lost per wrong pick, escalating within a question (1st, 2nd, 3rd miss). */
+export const WRONG_SCORE_PENALTIES = [3_000, 4_000, 5_000] as const;
+/** Sudden death keeps its old, shorter lock: the life lost is the real penalty. */
+export const SUDDEN_PENALTY_MS = 2_000;
 export const REVEAL_CORRECT_MS = 1_700;
 export const REVEAL_TIMEOUT_MS = 2_400;
 /** The AI only reaches this share of the drawing by the time limit; the rest is fast-forwarded on reveal. */
@@ -31,8 +36,10 @@ export const GAME_OVER_REVEAL_MS = 1_600;
 export const TA_DURATION_MS = 180_000;
 /** Time attack: tiny pause after a correct answer before the next drawing. */
 export const TA_REVEAL_MS = 300;
-/** Time attack: a wrong answer freezes input this long (no lives in this mode). */
-export const TA_PENALTY_MS = 1_500;
+/** Time attack: a wrong answer freezes input this long (the clock keeps running)… */
+export const TA_PENALTY_MS = 2_000;
+/** …and confiscates this much of the 3-minute clock. */
+export const TA_TIME_PENALTY_MS = 5_000;
 
 /** Sudden death speeds the AI up as you survive: the question clock (drawing + time limit) runs faster. */
 export function suddenSpeed(questionIndex: number): number {
@@ -80,6 +87,12 @@ export interface GameState {
   revealLanded: boolean;
   /** Remaining penalty lockout after a wrong answer. */
   lockRemaining: number;
+  /** Full length of the current lockout (for the countdown bar). */
+  lockTotal: number;
+  /** Increments on every wrong answer (drives the red flash / penalty popup). */
+  penaltyId: number;
+  /** What the last wrong answer cost: points (score attack) or ms of clock (time attack); 0 otherwise. */
+  lastPenalty: number;
   wrongPicks: number[];
   paused: boolean;
   score: number;
@@ -217,6 +230,9 @@ export function createIdleState(): GameState {
     revealFrom: 0,
     revealLanded: false,
     lockRemaining: 0,
+    lockTotal: PENALTY_MS,
+    penaltyId: 0,
+    lastPenalty: 0,
     wrongPicks: [],
     paused: false,
     score: 0,
@@ -472,7 +488,19 @@ export function submitAnswer(s: GameState, choice: number): boolean {
   } else {
     s.wrongPicks.push(choice);
     s.wrongCount++;
-    s.lockRemaining = s.mode === 'timeattack' ? TA_PENALTY_MS : PENALTY_MS;
+    s.lockTotal = s.mode === 'timeattack' ? TA_PENALTY_MS : s.mode === 'sudden' ? SUDDEN_PENALTY_MS : PENALTY_MS;
+    s.lockRemaining = s.lockTotal;
+    s.lastPenalty = 0;
+    if (s.mode === 'score') {
+      // Escalates with each miss on the same question; the total never drops below 0.
+      s.lastPenalty = WRONG_SCORE_PENALTIES[Math.min(s.wrongPicks.length, WRONG_SCORE_PENALTIES.length) - 1];
+      s.score = Math.max(0, s.score - s.lastPenalty);
+    } else if (s.mode === 'timeattack') {
+      // Clock confiscation; if this empties it, the next step() ends the run.
+      s.lastPenalty = Math.min(s.taRemaining, TA_TIME_PENALTY_MS);
+      s.taRemaining -= s.lastPenalty;
+    }
+    s.penaltyId++;
     s.shakeId++;
     sound.wrong();
     checkAchievements({ type: 'answer', mode: s.mode, correct: false, timeMs: s.elapsed, remainingMs: null });

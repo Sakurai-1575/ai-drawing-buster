@@ -25,6 +25,7 @@ interface Props {
 export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) {
   const shakeRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
+  const redFlashRef = useRef<HTMLDivElement>(null);
   const q = state.questions[state.index];
   const revealing = state.round !== 'drawing';
   // Drawing progress is locked to the timer. When the round ends, whatever is left is
@@ -71,6 +72,12 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
       { duration: 420, easing: 'ease-out' },
     );
   }, [state.shakeId]);
+
+  // Wrong answer: a red flash over everything (the shake above runs alongside).
+  useEffect(() => {
+    if (!state.penaltyId) return;
+    redFlashRef.current?.animate([{ opacity: 0.55 }, { opacity: 0.25, offset: 0.3 }, { opacity: 0 }], { duration: 480, easing: 'ease-out' });
+  }, [state.penaltyId]);
 
   // CRITICAL: white flash + a punchy zoom on the whole screen.
   useEffect(() => {
@@ -177,6 +184,7 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
           round={state.round}
           wrongPicks={state.wrongPicks}
           lockRemaining={state.lockRemaining}
+          lockTotal={state.lockTotal}
           onAnswer={onAnswer}
         />
       </div>
@@ -186,6 +194,7 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
         <CriticalBurst key={state.critId} label={godSpeed ? '⚡ GOD SPEED!!' : '💥 CRITICAL!!'} points={state.lastPoints} />
       )}
       <Confetti burst={state.confettiId} />
+      <div ref={redFlashRef} className="pointer-events-none absolute inset-0 z-50 bg-rose-600 opacity-0" />
       <div ref={flashRef} className="pointer-events-none absolute inset-0 z-50 bg-white opacity-0" />
     </div>
   );

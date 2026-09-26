@@ -59,7 +59,7 @@ export function TopBar({ t, index, total, elapsed, score, active, onPause, state
       )}
 
       <div
-        className={`comic-card flex h-full min-w-[210px] flex-col items-end justify-center px-4 transition-colors ${
+        className={`comic-card relative flex h-full min-w-[210px] flex-col items-end justify-center px-4 transition-colors ${
           rolling ? 'animate-score-bump bg-amber-300' : 'bg-amber-200'
         }`}
       >
@@ -67,6 +67,9 @@ export function TopBar({ t, index, total, elapsed, score, active, onPause, state
         <span className={`text-3xl font-black tabular-nums leading-none ${rolling ? 'text-rose-600' : 'text-slate-900'}`}>
           {shownScore.toLocaleString()}
         </span>
+        {mode === 'score' && state && state.penaltyId > 0 && state.lastPenalty > 0 && (
+          <PenaltyPopup key={state.penaltyId} label={`-${state.lastPenalty.toLocaleString()}`} />
+        )}
       </div>
 
       <SettingsButton t={t} variant="icon" onBeforeOpen={onPause} />
@@ -135,7 +138,7 @@ function TimeAttackHud({ t, state }: { t: Dict; state: GameState }) {
   return (
     <div className="flex h-full flex-1 items-stretch gap-3" data-testid="ta-hud">
       <div
-        className={`comic-card flex flex-1 items-center justify-center gap-4 ${danger ? 'animate-danger-frame bg-rose-200' : 'bg-slate-900'}`}
+        className={`comic-card relative flex flex-1 items-center justify-center gap-4 ${danger ? 'animate-danger-frame bg-rose-200' : 'bg-slate-900'}`}
       >
         <span className={`text-sm font-black tracking-widest ${danger ? 'text-rose-700' : 'text-amber-200/70'}`}>{t.timeLeft}</span>
         <span
@@ -144,6 +147,7 @@ function TimeAttackHud({ t, state }: { t: Dict; state: GameState }) {
         >
           {label}
         </span>
+        {state.penaltyId > 0 && state.lastPenalty > 0 && <PenaltyPopup key={state.penaltyId} label={`-${state.lastPenalty / 1000}s`} />}
       </div>
       <div className="comic-card flex min-w-[110px] flex-col items-center justify-center bg-emerald-200 px-3">
         <span className="text-xs font-black tracking-widest text-slate-600">{t.correctSoFar}</span>
@@ -154,5 +158,17 @@ function TimeAttackHud({ t, state }: { t: Dict; state: GameState }) {
         <span className="text-3xl font-black tabular-nums leading-none">{state.combo}</span>
       </div>
     </div>
+  );
+}
+
+/** Red "-3,000" / "-5s" that drops out of the HUD when a wrong answer costs something. */
+function PenaltyPopup({ label }: { label: string }) {
+  return (
+    <span
+      data-testid="penalty-popup"
+      className="animate-penalty-drop pointer-events-none absolute -bottom-12 right-3 z-30 whitespace-nowrap text-4xl font-black tabular-nums text-rose-600 [-webkit-text-stroke:2px_#0f172a] [paint-order:stroke_fill] [text-shadow:3px_3px_0_#0f172a]"
+    >
+      {label}
+    </span>
   );
 }

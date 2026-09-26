@@ -32,7 +32,7 @@ export type MascotLineKind =
 
 export const MASCOT_EXPRESSION: Record<MascotLineKind, MascotExpression> = {
   roundStart: 'smug',
-  wrong: 'laugh',
+  wrong: 'smug',
   fast: 'panic',
   correct: 'smug',
   timeUp: 'laugh',
@@ -45,7 +45,7 @@ export const MASCOT_EXPRESSION: Record<MascotLineKind, MascotExpression> = {
 export const MASCOT_LINES: Record<Lang, Record<MascotLineKind, string[]>> = {
   ja: {
     roundStart: ['何に見えるかニャ？😏', 'これ、絶対アレだよね〜？', '当てられるかな？', 'ふふふ…よーく見るニャ', '今回のは自信作ニャ！'],
-    wrong: ['ブッブー！引っかかった〜！www', 'はい2秒お休み！', '甘い甘い！', 'ニャハハ！ハズレ〜！', 'その答えを待ってたニャ♪'],
+    wrong: ['ブッブー！引っかかった〜！www', 'はい、しばらくお休み〜♪', '甘い甘い！', 'ニャハハ！ハズレ〜！', 'その答えを待ってたニャ♪'],
     fast: ['えっ、もうバレた！？', '待って、まだ数本しか引いてないのに！？', 'エスパーかよ…', 'はやっ！？ズルしてないかニャ！？'],
     correct: ['チッ、正解かニャ…', 'お見事！', 'ぐぬぬ…やるニャ', 'まあまあの速さニャ'],
     timeUp: ['全滅〜！AIの完全勝利！', '誰も気づかないとは情けないニャ…', 'ニャハハ！時間切れ〜！', 'ボクの画力、天才すぎたかニャ？'],
@@ -56,7 +56,7 @@ export const MASCOT_LINES: Record<Lang, Record<MascotLineKind, string[]>> = {
   },
   en: {
     roundStart: ['What does it look like? 😏', "It's totally THAT, right~?", 'Can you guess it?', 'Heh heh… look closely!', "I'm proud of this one!"],
-    wrong: ['Bzzzt! Gotcha! lol', 'Two-second time-out!', 'Too easy!', 'Nyahaha! Wrong~!', 'Just the answer I wanted ♪'],
+    wrong: ['Bzzzt! Gotcha! lol', 'Time-out for you~ ♪', 'Too easy!', 'Nyahaha! Wrong~!', 'Just the answer I wanted ♪'],
     fast: ['Wait, already!?', "I've barely drawn anything!?", 'Are you psychic…?', "So fast!? You're not cheating, right!?"],
     correct: ['Tch… correct.', 'Well done!', 'Grr… not bad.', 'Decent speed, I guess.'],
     timeUp: ['Wiped out! Total AI victory!', 'Nobody saw it? How sad…', "Nyahaha! Time's up~!", 'Guess my art was too genius?'],

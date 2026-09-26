@@ -21,9 +21,9 @@ npm run build    # typecheck + production build to dist/
 ## Solo modes
 | Mode | Rules | Personal best (localStorage) |
 | --- | --- | --- |
-| 🃏 Score Attack | 10 random quizzes, 10s each, score = time left × combo | `adb.bestScore` (score) |
-| 🔥 Sudden Death | 3 lives; a wrong answer or a 10s timeout costs one. All 200 quizzes, no repeats. The AI speeds up: Q1–10 1.0x, Q11–20 1.15x, Q21–30 1.3x, Q31+ 1.5x | `adb.best.sudden` (survived) |
-| ⚡ Time Attack | One 3-minute clock, no per-question limit. Wrong answer = 1.5s input lock; 0.3s to the next drawing after a hit. Score = (1,000 + speed bonus) × combo | `adb.best.timeattack` (correct) |
+| 🃏 Score Attack | 10 random quizzes, 10s each, score = time left × combo. Wrong answer: −3,000 / −4,000 / −5,000 (1st/2nd/3rd miss on a question, total floored at 0) + 3s answer lock while the AI keeps drawing | `adb.bestScore` (score) |
+| 🔥 Sudden Death | 3 lives; a wrong answer or a 10s timeout costs one. All 200 quizzes, no repeats (plus a 2s answer lock). The AI speeds up: Q1–10 1.0x, Q11–20 1.15x, Q21–30 1.3x, Q31+ 1.5x | `adb.best.sudden` (survived) |
+| ⚡ Time Attack | One 3-minute clock, no per-question limit. Wrong answer = −5s off the clock + 2s input lock; 0.3s to the next drawing after a hit. Score = (1,000 + speed bonus) × combo | `adb.best.timeattack` (correct) |
 
 Every correct answer in any mode registers in the Buster Dex.
 
@@ -46,7 +46,7 @@ src/
 ## Online multiplayer (Mode A)
 Title → Multiplayer. The host creates a room (code like `BUST-1234`); up to 3 guests join with the code.
 Peers connect over WebRTC data channels, brokered by the free public PeerServer (`0.peerjs.com`).
-The host is authoritative: it picks the questions, times each round, judges answers and broadcasts results.
+A wrong answer locks that player out for 3s. The host is authoritative: it picks the questions, times each round, judges answers and broadcasts results.
 There is no TURN relay, so players behind some strict NATs / corporate networks may fail to connect.
 Invite links (`?room=BUST-1234&mode=a|b`) open straight into that room; they're only shareable when the game is served over http(s), not from the packaged Tauri app.
 

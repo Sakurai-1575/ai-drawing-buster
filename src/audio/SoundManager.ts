@@ -128,10 +128,15 @@ class SoundManager {
     [4186, 5274, 6272, 5274, 4186].forEach((f, i) => this.tone(f, 0.26 + i * 0.05, 0.08, 'sine', 0.08));
   }
 
-  /** Short low buzzer. */
+  /** Heavy "ブブー" buzzer: two detuned low blasts over a sub thump. */
   wrong() {
-    this.tone(98, 0, 0.38, 'sawtooth', 0.45);
-    this.tone(104, 0, 0.38, 'square', 0.22);
+    this.tone(60, 0, 0.25, 'sine', 0.8, 35);
+    this.noise(0, 0.12, 0.35, 'lowpass', 600);
+    for (const [at, dur] of [[0, 0.17], [0.21, 0.42]]) {
+      this.tone(92, at, dur, 'sawtooth', 0.45);
+      this.tone(97, at, dur, 'square', 0.25);
+      this.tone(46, at, dur, 'square', 0.2);
+    }
   }
 
   /** Shattering glass: a bright noise crack plus scattered high shards. */

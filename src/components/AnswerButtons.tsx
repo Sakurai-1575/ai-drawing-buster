@@ -16,12 +16,14 @@ interface Props {
   round: RoundState;
   wrongPicks: number[];
   lockRemaining: number;
+  /** Full length of the lockout, for the countdown bar. */
+  lockTotal?: number;
   /** Greys out every button without a reveal (e.g. before an online round starts). */
   disabled?: boolean;
   onAnswer: (index: number) => void;
 }
 
-export function AnswerButtons({ t, choices, answer, round, wrongPicks, lockRemaining, disabled: allDisabled = false, onAnswer }: Props) {
+export function AnswerButtons({ t, choices, answer, round, wrongPicks, lockRemaining, lockTotal = PENALTY_MS, disabled: allDisabled = false, onAnswer }: Props) {
   const locked = lockRemaining > 0;
   const revealing = round !== 'drawing';
 
@@ -31,9 +33,9 @@ export function AnswerButtons({ t, choices, answer, round, wrongPicks, lockRemai
         <div className="absolute -top-14 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-xl border-4 border-slate-900 bg-rose-500 px-4 py-1 text-xl font-black text-white shadow-[4px_4px_0px_#0f172a]">
           <span>✕ {t.penalty}</span>
           <span className="h-3 w-32 overflow-hidden rounded-full border-2 border-slate-900 bg-white">
-            <span className="block h-full bg-slate-900" style={{ width: `${(lockRemaining / PENALTY_MS) * 100}%` }} />
+            <span className="block h-full bg-slate-900" style={{ width: `${Math.min(1, lockRemaining / lockTotal) * 100}%` }} />
           </span>
-          <span className="tabular-nums">{(lockRemaining / 1000).toFixed(1)}s</span>
+          <span className="tabular-nums">LOCK... {(lockRemaining / 1000).toFixed(1)}s</span>
         </div>
       )}
 

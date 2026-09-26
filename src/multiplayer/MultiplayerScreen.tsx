@@ -433,8 +433,11 @@ function Game({ t, lang, scale, view, match }: { t: Dict; lang: Lang; scale: num
     if (round) say('roundStart');
   }, [round?.index, say]);
   const misses = view.mine.wrongPicks.length;
+  const redFlashRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (misses) say('wrong');
+    if (!misses) return;
+    say('wrong');
+    redFlashRef.current?.animate([{ opacity: 0.55 }, { opacity: 0.25, offset: 0.3 }, { opacity: 0 }], { duration: 480, easing: 'ease-out' });
   }, [misses, say]);
   const mySlot = view.mine.correctSlot;
   useEffect(() => {
@@ -483,7 +486,8 @@ function Game({ t, lang, scale, view, match }: { t: Dict; lang: Lang; scale: num
   const ratio = remaining / TIME_LIMIT_MS;
 
   return (
-    <div className="flex h-full flex-col gap-4 p-5">
+    <div className="relative flex h-full flex-col gap-4 p-5">
+      <div ref={redFlashRef} className="pointer-events-none absolute inset-0 z-50 bg-rose-600 opacity-0" />
       {/* Top bar: question, timer, room, leave */}
       <div className="flex h-[76px] shrink-0 items-center gap-4">
         <div className="comic-card flex h-full items-center bg-slate-900 px-5 text-amber-200">

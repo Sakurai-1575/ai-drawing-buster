@@ -171,6 +171,18 @@ body {
 }
 .animate-score-float { animation: score-float 1.5s ease-out both; }
 
+/* Wrong answer: the penalty drops out of the score/clock and fades. */
+@keyframes penalty-drop {
+  0% { transform: translateY(-24px) scale(1.6); opacity: 0; }
+  15% { transform: translateY(0) scale(1); opacity: 1; }
+  25% { transform: translateX(-4px); }
+  35% { transform: translateX(4px); }
+  45% { transform: translateX(0); }
+  75% { transform: translateY(6px); opacity: 1; }
+  100% { transform: translateY(26px); opacity: 0; }
+}
+.animate-penalty-drop { animation: penalty-drop 1.3s ease-out both; }
+
 /* Combo counter pop on each increment. */
 @keyframes combo-pop {
   0% { transform: scale(0.3) rotate(12deg); }
