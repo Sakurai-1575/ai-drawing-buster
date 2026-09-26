@@ -17,14 +17,23 @@ interface Props {
   className?: string;
 }
 
+const MOTION: Record<MascotExpression, string> = {
+  normal: 'animate-mascot-idle',
+  smug: 'animate-mascot-idle',
+  laugh: 'animate-mascot-laugh',
+  panic: 'animate-mascot-tremble',
+  shock: 'animate-mascot-shock',
+  wink: 'animate-mascot-idle',
+  angry: 'animate-mascot-huff',
+  sleepy: 'animate-mascot-doze',
+};
+
 /**
  * "Buster-kun": a doodle robot cat with a retro CRT-monitor head, clutching a pencil.
  * Pure inline SVG — the face is drawn on the screen in phosphor green and swaps per expression.
  */
 export function MascotCharacter({ expression, size = 160, variant = 'full', animated = true, className = '' }: Props) {
-  const motion = animated
-    ? { normal: 'animate-mascot-idle', smug: 'animate-mascot-idle', laugh: 'animate-mascot-laugh', panic: 'animate-mascot-tremble' }[expression]
-    : '';
+  const motion = animated ? MOTION[expression] : '';
   const head = variant === 'head';
   const [vw, vh] = head ? [112, 98] : [120, 132];
   return (
@@ -89,6 +98,10 @@ export function MascotCharacter({ expression, size = 160, variant = 'full', anim
       )}
 
       {expression === 'panic' && <Sweat />}
+      {expression === 'shock' && <ShockLines />}
+      {expression === 'wink' && <Sparkle />}
+      {expression === 'angry' && <AngerMark />}
+      {expression === 'sleepy' && <Zzz />}
     </svg>
   );
 }
@@ -148,7 +161,110 @@ function Face({ expression }: { expression: MascotExpression }) {
           <path d="M46 70 q3.5 -5 7 0 t7 0 t7 0 t7 0" strokeWidth="3" />
         </g>
       );
+    case 'shock':
+      return (
+        <g {...common}>
+          {/* tiny dot eyes in wide-open rings */}
+          <circle cx="46" cy="50" r="7" strokeWidth="2.4" />
+          <circle cx="74" cy="50" r="7" strokeWidth="2.4" />
+          <circle cx="46" cy="50" r="1.8" fill={GLOW} stroke="none" />
+          <circle cx="74" cy="50" r="1.8" fill={GLOW} stroke="none" />
+          {/* jaw hanging open */}
+          <ellipse cx="60" cy="70" rx="6.5" ry="8" fill={GLOW} stroke="none" />
+          <ellipse cx="60" cy="73" rx="3.5" ry="3" fill="#fb7185" stroke="none" />
+        </g>
+      );
+    case 'wink':
+      return (
+        <g {...common}>
+          {/* open eye + ^ winking eye */}
+          <ellipse cx="46" cy="52" rx="5" ry="6.5" fill={GLOW} stroke="none" />
+          <path d="M67 54 q7 -8 14 0" />
+          {/* confident grin with a fang */}
+          <path d="M48 64 q12 10 24 0" />
+          <path d="M53 66.5 l2 4 l2 -3" strokeWidth="2" />
+          <path d="M30 63 h9 M31 69 l8 -3 M90 63 h-9 M89 69 l-8 -3" strokeWidth="2" />
+        </g>
+      );
+    case 'angry':
+      return (
+        <g {...common}>
+          {/* slanted brows over squinting eyes */}
+          <path d="M38 42 l14 6" strokeWidth="2.8" />
+          <path d="M82 42 l-14 6" strokeWidth="2.8" />
+          <path d="M41 53 q5 -4 10 0" />
+          <path d="M69 53 q5 -4 10 0" />
+          {/* puffed-out cheeks and a pursed mouth */}
+          <g className="animate-mascot-puff" style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
+            <circle cx="34" cy="66" r="7" fill="#fb7185" fillOpacity="0.55" stroke="none" />
+            <circle cx="86" cy="66" r="7" fill="#fb7185" fillOpacity="0.55" stroke="none" />
+          </g>
+          <path d="M55 70 q5 -5 10 0 q-5 5 -10 0 z" fill={GLOW} strokeWidth="2" />
+        </g>
+      );
+    case 'sleepy':
+      return (
+        <g {...common}>
+          {/* closed, droopy eyes */}
+          <path d="M39 53 q7 5 14 0" />
+          <path d="M67 53 q7 5 14 0" />
+          {/* slack mouth + a drool drop */}
+          <path d="M54 67 q6 3 12 0" />
+          <path d="M65 68 q2 4 0 6 q-2 -2 0 -6 z" fill="#7dd3fc" stroke="#7dd3fc" strokeWidth="1.5" />
+        </g>
+      );
   }
+}
+
+/** Frozen-in-shock jolt lines around the head. */
+function ShockLines() {
+  return (
+    <g stroke={INK} strokeWidth="3" strokeLinecap="round">
+      <path d="M4 20 l8 6 M2 46 h9 M116 20 l-8 6 M118 46 h-9 M60 -6 v8" />
+    </g>
+  );
+}
+
+/** Twinkling star beside the winking eye. */
+function Sparkle() {
+  return (
+    <g className="animate-mascot-twinkle" style={{ transformBox: 'fill-box', transformOrigin: 'center' }}>
+      <path d="M110 8 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" fill="#fde047" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+/** Manga anger mark on the corner of the head. */
+function AngerMark() {
+  return (
+    <g
+      className="animate-mascot-puff"
+      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+      stroke="#e11d48"
+      strokeWidth="3"
+      strokeLinecap="round"
+      fill="none"
+    >
+      <path d="M102 8 q3 5 8 5 M112 6 q-5 3 -5 8 M104 18 q5 -3 5 -8 M114 16 q-3 -5 -8 -5" />
+    </g>
+  );
+}
+
+/** Drifting "Z z z" while dozing off. */
+function Zzz() {
+  return (
+    <g className="animate-mascot-zzz" fill={INK} fontWeight="900" fontFamily="system-ui, sans-serif">
+      <text x="90" y="18" fontSize="16">
+        Z
+      </text>
+      <text x="102" y="7" fontSize="11">
+        z
+      </text>
+      <text x="110" y="-2" fontSize="8">
+        z
+      </text>
+    </g>
+  );
 }
 
 function Sweat() {

@@ -2,7 +2,13 @@ import type { Lang } from './data/quizzes';
 
 /** Buster-kun's lines: one random pick per event. `{name}` is filled for multiplayer lines. */
 
-export type MascotExpression = 'normal' | 'smug' | 'laugh' | 'panic';
+/**
+ * Buster-kun's faces. shock: frozen jaw-drop (a jaw-dropping play) · wink: smug wink + sparkle (a good fake-out, hellos) ·
+ * angry: puffed-up pout (sore loser) · sleepy: nodding off (idle, gags).
+ */
+export type MascotExpression = 'normal' | 'smug' | 'laugh' | 'panic' | 'shock' | 'wink' | 'angry' | 'sleepy';
+
+export const MASCOT_EXPRESSIONS: readonly MascotExpression[] = ['normal', 'smug', 'laugh', 'panic', 'shock', 'wink', 'angry', 'sleepy'];
 
 export type MascotLineKind =
   /** A new drawing starts. */

@@ -5,6 +5,7 @@ import type { Dict } from '../i18n';
 import { DrawingCanvas } from './DrawingCanvas';
 import { MascotCharacter } from './MascotCharacter';
 import { RankingModal } from './TitleModals';
+import { AboutModal } from './AboutModal';
 import { SettingsButton } from '../settings/SettingsButton';
 import { DexButton } from '../dex/DexButton';
 
@@ -25,14 +26,21 @@ const HOW_TO_TAG_BG = ['bg-sky-300', 'bg-amber-300', 'bg-emerald-300', 'bg-rose-
 
 export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultiplayer }: Props) {
   const [rankingOpen, setRankingOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const openRanking = () => {
     sound.unlock();
     sound.click();
     setRankingOpen(true);
   };
+  const openAbout = () => {
+    sound.unlock();
+    sound.click();
+    setAboutOpen(true);
+  };
   const close = () => {
     sound.click();
     setRankingOpen(false);
+    setAboutOpen(false);
   };
 
   return (
@@ -93,10 +101,11 @@ export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultipla
 
       <div className="flex flex-col items-center gap-5">
         <BestScore t={t} score={bestScore} />
-        <TitleDemo scale={scale} lang={lang} />
+        <TitleDemo scale={scale} lang={lang} aboutLabel={t.aboutOpen} onMascotClick={openAbout} />
       </div>
 
       {rankingOpen && <RankingModal t={t} lang={lang} onClose={close} />}
+      {aboutOpen && <AboutModal t={t} onClose={close} />}
     </div>
   );
 }
@@ -130,7 +139,7 @@ function BestScore({ t, score }: { t: Dict; score: number }) {
   );
 }
 /** Loops through the quiz drawings as an attract-mode preview. */
-function TitleDemo({ scale, lang }: { scale: number; lang: Lang }) {
+function TitleDemo({ scale, lang, aboutLabel, onMascotClick }: { scale: number; lang: Lang; aboutLabel: string; onMascotClick: () => void }) {
   const [time, setTime] = useState(0);
 
   useEffect(() => {
@@ -156,7 +165,18 @@ function TitleDemo({ scale, lang }: { scale: number; lang: Lang }) {
       <div className="comic-card paper-bg overflow-hidden rounded-3xl">
         <DrawingCanvas strokes={quiz.strokes} progress={progress} size={370} scale={scale} showPencil={progress < 1} />
       </div>
-      <MascotCharacter expression={smirking ? 'smug' : 'normal'} size={140} className="absolute -right-[104px] bottom-[34px]" />
+      {/* Clickable: opens the About Buster-kun profile; hops on hover. */}
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label={aboutLabel}
+        title={aboutLabel}
+        data-testid="title-mascot"
+        onClick={onMascotClick}
+        className="mascot-hop absolute -right-[104px] bottom-[34px] cursor-pointer"
+      >
+        <MascotCharacter expression={smirking ? 'smug' : 'normal'} size={140} />
+      </button>
       <div className="comic-card min-w-[200px] bg-amber-200 px-5 py-2 text-center text-2xl font-black">
         {progress < 1 ? '？？？' : quiz.labels[lang]}
       </div>
