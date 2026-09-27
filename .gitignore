@@ -6,3 +6,7 @@ src-tauri/target
 .env*
 
 .vercel
+
+ai_drawing_buster_gameplay.mp4
+promo_assets/
+*.mp4
