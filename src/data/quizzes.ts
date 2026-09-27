@@ -11,6 +11,7 @@ import { localize, resolveLang, type BaseLang, type Lang, type Localized } from 
 import type { Genre } from './genres';
 import { arc, bumpy, circle, coil, cosmosPetal, curve, ellipse, heartLeaf, join, line, mirror, pentagram, place, rad, rays, spiral, wave, type Point, type Stroke } from './shapes';
 import { QUIZZES_VOL2 } from './quizzesVol2';
+import { QUIZZES_VOL3 } from './quizzesVol3';
 
 export type { Lang, Localized };
 export type { Point, Stroke };
@@ -4732,10 +4733,10 @@ const BASE_QUIZZES: Quiz[] = [
 export type PackLang = Exclude<Lang, BaseLang>;
 
 /**
- * Every quiz: 1–200 above, 201–300 in `./quizzesVol2`. Only `ja` + `en` text ships in the main
+ * Every quiz: 1–200 above, 201–300 in `./quizzesVol2`, 301–500 in `./quizzesVol3`. Only `ja` + `en` text ships in the main
  * bundle; `loadQuizText` (./quizI18n) merges other languages in when they're first needed.
  */
-export const QUIZZES: Quiz[] = [...BASE_QUIZZES, ...QUIZZES_VOL2];
+export const QUIZZES: Quiz[] = [...BASE_QUIZZES, ...QUIZZES_VOL2, ...QUIZZES_VOL3];
 
 /** Merge one language's translation pack into QUIZZES (called by ./quizI18n once the pack has loaded). */
 export function applyQuizTranslations(lang: PackLang, pack: QuizTranslations): void {

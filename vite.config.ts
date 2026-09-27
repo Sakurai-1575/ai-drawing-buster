@@ -21,5 +21,18 @@ export default defineConfig({
     target: 'es2021',
     outDir: 'dist',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    rollupOptions: {
+      output: {
+        // The quiz drawings (500 quizzes of stroke data) and React are big and change at different
+        // paces, so they get their own chunks, fetched in parallel with the app code.
+        // Translations and multiplayer are dynamic imports (see src/data/quizI18n, src/App.tsx).
+        manualChunks(id) {
+          const path = id.replace(/\\/g, '/');
+          if (/\/node_modules\/(react|react-dom|scheduler)\//.test(path)) return 'react';
+          if (/\/src\/data\/(quizzes|shapes)\.ts$/.test(path)) return 'quizzes-1';
+          if (/\/src\/data\/quizzesVol[23]\.ts$/.test(path)) return 'quizzes-2';
+        },
+      },
+    },
   },
 });
