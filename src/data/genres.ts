@@ -1,7 +1,7 @@
 import type { FullyLocalized } from '../i18n/lang';
 
 /** Topic genres, shared by the AI quizzes (Solo / Mode A / Mode B) and Mode B's draw-only topics. */
-export const GENRES = ['animal', 'creature', 'food', 'plant', 'vehicle', 'building', 'item'] as const;
+export const GENRES = ['animal', 'creature', 'food', 'plant', 'vehicle', 'building', 'item', 'fashion', 'culture'] as const;
 export type Genre = (typeof GENRES)[number];
 
 export const GENRE_LABELS: Record<Genre, FullyLocalized<string>> = {
@@ -12,6 +12,8 @@ export const GENRE_LABELS: Record<Genre, FullyLocalized<string>> = {
   vehicle: { ja: '🚗 のりもの', en: '🚗 Vehicles', 'zh-CN': '🚗 交通工具', 'zh-TW': '🚗 交通工具', ko: '🚗 탈것' },
   building: { ja: '🏰 たてもの・ばしょ', en: '🏰 Buildings & places', 'zh-CN': '🏰 建筑·场所', 'zh-TW': '🏰 建築·場所', ko: '🏰 건물·장소' },
   item: { ja: '🔑 にちようひん・どうぐ', en: '🔑 Everyday items & tools', 'zh-CN': '🔑 日用品·工具', 'zh-TW': '🔑 日用品·工具', ko: '🔑 생활용품·도구' },
+  fashion: { ja: '👟 ファッション', en: '👟 Fashion', 'zh-CN': '👟 服饰', 'zh-TW': '👟 服飾', ko: '👟 패션' },
+  culture: { ja: '🗺️ せかいの文化・名所', en: '🗺️ World culture & landmarks', 'zh-CN': '🗺️ 世界文化·名胜', 'zh-TW': '🗺️ 世界文化·名勝', ko: '🗺️ 세계 문화·명소' },
 };
 
 /** Short tab labels (Buster Dex filter tabs). */
@@ -23,4 +25,6 @@ export const GENRE_SHORT: Record<Genre, FullyLocalized<string>> = {
   vehicle: { ja: '🚗 のりもの', en: '🚗 Vehicles', 'zh-CN': '🚗 交通', 'zh-TW': '🚗 交通', ko: '🚗 탈것' },
   building: { ja: '🏰 たてもの', en: '🏰 Buildings', 'zh-CN': '🏰 建筑', 'zh-TW': '🏰 建築', ko: '🏰 건물' },
   item: { ja: '🔑 どうぐ', en: '🔑 Items', 'zh-CN': '🔑 工具', 'zh-TW': '🔑 工具', ko: '🔑 도구' },
+  fashion: { ja: '👟 ファッション', en: '👟 Fashion', 'zh-CN': '👟 服饰', 'zh-TW': '👟 服飾', ko: '👟 패션' },
+  culture: { ja: '🗺️ 文化・名所', en: '🗺️ Culture', 'zh-CN': '🗺️ 文化', 'zh-TW': '🗺️ 文化', ko: '🗺️ 문화' },
 };

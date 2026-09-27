@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { sound } from '../audio/SoundManager';
-import { LANGS, LANG_NAMES, type Lang } from '../i18n/lang';
+import { LANGS, LANG_NAMES, LANG_SHORT, type Lang } from '../i18n/lang';
 
 /**
  * Each name carries its own `lang` so it renders in that language's font (e.g. 简体中文 in a
@@ -35,7 +35,7 @@ export function LanguagePicker({ lang, onLang }: { lang: Lang; onLang: (lang: La
   );
 }
 
-/** Compact "🌐 日本語 ▾" chip with a drop-down list, for the title screen. */
+/** Compact "🌐 EN ▾" chip with a drop-down list (full names inside), for the title screen. */
 export function LanguageMenu({ lang, onLang, label }: { lang: Lang; onLang: (lang: Lang) => void; label: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -76,7 +76,7 @@ export function LanguageMenu({ lang, onLang, label }: { lang: Lang; onLang: (lan
       >
         <span>🌐</span>
         <span lang={lang} className="whitespace-nowrap">
-          {LANG_NAMES[lang]}
+          {LANG_SHORT[lang]}
         </span>
         <span className="text-xs">▼</span>
       </button>

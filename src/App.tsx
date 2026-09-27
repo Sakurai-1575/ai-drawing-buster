@@ -6,12 +6,11 @@ import { PauseMenu } from './components/PauseMenu';
 import { ResultScreen } from './components/ResultScreen';
 import { TitleScreen } from './components/TitleScreen';
 import { SoloModeModal } from './components/SoloModeModal';
-import { MultiplayerScreen } from './multiplayer/MultiplayerScreen';
 import { clearInviteFromUrl, parseInvite } from './net/invite';
 import { useGameEngine } from './game/useGameEngine';
 import { STAGE_H, STAGE_W, useStageScale } from './hooks/useStageScale';
 import { useLang } from './hooks/useLang';
-import { STRINGS } from './i18n';
+import { getStrings } from './i18n';
 import { SettingsProvider } from './settings/SettingsContext';
 import { DexProvider } from './dex/DexContext';
 import { AchievementToaster } from './components/AchievementToaster';
@@ -22,6 +21,8 @@ import { checkAchievements } from './services/achievements';
  * `import.meta.env.DEV` is false in production, so it isn't bundled.
  */
 const CapsuleGenerator = import.meta.env.DEV ? lazy(() => import('./tools/CapsuleGenerator')) : null;
+// Online play (PeerJS/WebRTC + its screens) is a separate chunk, fetched when multiplayer opens.
+const MultiplayerScreen = lazy(() => import('./multiplayer/MultiplayerScreen').then((m) => ({ default: m.MultiplayerScreen })));
 const CAPSULES_HASH = '#capsules';
 
 /** Physical key codes → answer index (layout-independent: works with JIS/US/AZERTY). */
@@ -45,7 +46,7 @@ export default function App() {
   const scale = useStageScale();
   const engine = useGameEngine();
   const { state, ref, start, answer, setPaused, togglePause, quitToTitle } = engine;
-  const t = STRINGS[lang];
+  const t = getStrings(lang);
   // Online multiplayer runs its own screens and input; the solo engine idles on the title meanwhile.
   // An invite link (?room=BUST-1234&mode=b) skips the title and joins that room.
   const [invite, setInvite] = useState(() => parseInvite(window.location.search));
@@ -150,16 +151,18 @@ export default function App() {
           <SettingsProvider t={t} lang={lang} onLang={setLang}>
             <DexProvider t={t} lang={lang} scale={scale}>
               {multiOpen && (
-                <MultiplayerScreen
-                  t={t}
-                  lang={lang}
-                  scale={scale}
-                  autoJoin={invite}
-                  onExit={() => {
-                    setMultiOpen(false);
-                    setInvite(null); // one-shot: reopening multiplayer later shouldn't rejoin
-                  }}
-                />
+                <Suspense fallback={null}>
+                  <MultiplayerScreen
+                    t={t}
+                    lang={lang}
+                    scale={scale}
+                    autoJoin={invite}
+                    onExit={() => {
+                      setMultiOpen(false);
+                      setInvite(null); // one-shot: reopening multiplayer later shouldn't rejoin
+                    }}
+                  />
+                </Suspense>
               )}
 
               {!multiOpen && state.phase === 'title' && <TitleScreen t={t} lang={lang} scale={scale} bestScore={state.bestScore} onStart={() => setPickerOpen(true)} onOpenMultiplayer={() => setMultiOpen(true)} onLang={setLang} />}

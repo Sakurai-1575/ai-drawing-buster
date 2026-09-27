@@ -84,7 +84,7 @@ export function BusterDexModal({ t, lang, scale, onClose }: Props) {
         </div>
 
         {/* Genre tabs */}
-        <div role="tablist" className="flex gap-2 border-b-[3px] border-slate-200 bg-white px-5 py-2.5">
+        <div role="tablist" className="flex gap-1.5 border-b-[3px] border-slate-200 bg-white px-4 py-2.5">
           {(['all', ...GENRES] as const).map((g) => (
             <button
               key={g}
@@ -96,7 +96,7 @@ export function BusterDexModal({ t, lang, scale, onClose }: Props) {
                 sound.click();
                 setTab(g);
               }}
-              className={`flex flex-col items-center whitespace-nowrap rounded-xl border-[3px] border-slate-900 px-3 py-1 text-sm font-black leading-tight ${
+              className={`flex flex-col items-center whitespace-nowrap rounded-xl border-[3px] border-slate-900 px-2 py-1 text-sm font-black leading-tight ${
                 tab === g ? 'bg-slate-900 text-amber-200' : 'bg-white hover:bg-amber-100'
               }`}
             >

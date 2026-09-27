@@ -27,6 +27,15 @@ export const LANG_NAMES: Record<Lang, string> = {
   ko: '한국어',
 };
 
+/** Compact labels for tight spots (the title screen's language chip). */
+export const LANG_SHORT: Record<Lang, string> = {
+  ja: '日本語',
+  en: 'EN',
+  'zh-CN': '简体',
+  'zh-TW': '繁體',
+  ko: '한국어',
+};
+
 /**
  * Where to look when a language is missing. English first for everyone but Japanese players:
  * it's the most widely read, and Chinese readers shouldn't get Japanese kanji that look

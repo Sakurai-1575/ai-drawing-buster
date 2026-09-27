@@ -84,7 +84,8 @@ export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultipla
           <div className="inline-block rotate-[2deg] rounded-xl border-4 border-slate-900 bg-sky-300 px-3 py-0.5 text-lg font-black shadow-[4px_4px_0px_#0f172a]">
             REAL-TIME SKETCH QUIZ
           </div>
-          <h1 className="logo-3d mt-2 whitespace-nowrap text-[60px] font-black leading-[1.1] tracking-tight">{t.title}</h1>
+          {/* Long (Latin-script) titles step down so they stay inside the column, clear of the top-right buttons. */}
+          <h1 className={`logo-3d mt-2 whitespace-nowrap font-black leading-[1.1] tracking-tight ${t.title.length > 12 ? 'text-[50px]' : 'text-[60px]'}`}>{t.title}</h1>
         </div>
         <p className="text-2xl font-black text-slate-700">{t.tagline}</p>
 

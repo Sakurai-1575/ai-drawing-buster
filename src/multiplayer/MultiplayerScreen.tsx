@@ -5,6 +5,7 @@ import { AnswerButtons } from '../components/AnswerButtons';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 import { MascotCommentator } from '../components/MascotCommentator';
 import { quizOptions, type Choices, type Lang } from '../data/quizzes';
+import { loadAllQuizText } from '../data/quizI18n';
 import { REVEAL_DRAW_MS, TIME_LIMIT_MS, drawProgress } from '../game/engine';
 import { useMascot } from '../hooks/useMascot';
 import { fmt, type Dict } from '../i18n';
@@ -67,6 +68,10 @@ interface Props {
 export function MultiplayerScreen({ t, lang, scale, autoJoin, onExit }: Props) {
   const match = useMatch();
   const { view } = match;
+  // A Mode B host sends the options in every language, so it needs all quiz text, not just its own.
+  useEffect(() => {
+    loadAllQuizText().catch(() => {});
+  }, []);
   // Picked on the mode-select screen; a guest ends up in whatever mode the host's room uses.
   const [mode, setMode] = useState<GameMode | null>(autoJoin?.mode ?? null);
   const exit = () => {

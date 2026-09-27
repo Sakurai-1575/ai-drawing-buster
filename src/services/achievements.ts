@@ -158,11 +158,11 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
     icon: '🌈',
     title: { ja: '雑学王', en: 'Trivia King', 'zh-CN': '杂学之王', 'zh-TW': '雜學之王', ko: '잡학왕' },
     description: {
-      ja: '全7ジャンルのお題を、各ジャンル1問以上正解する',
-      en: 'Solve at least one quiz in each of the 7 genres',
-      'zh-CN': '在全部7个分类中，各答对至少1题',
-      'zh-TW': '在全部7個分類中，各答對至少1題',
-      ko: '7개 장르 모두 1문제 이상씩 맞히기',
+      ja: `全${GENRES.length}ジャンルのお題を、各ジャンル1問以上正解する`,
+      en: `Solve at least one quiz in each of the ${GENRES.length} genres`,
+      'zh-CN': `在全部${GENRES.length}个分类中，各答对至少1题`,
+      'zh-TW': `在全部${GENRES.length}個分類中，各答對至少1題`,
+      ko: `${GENRES.length}개 장르 모두 1문제 이상씩 맞히기`,
     },
   },
   {

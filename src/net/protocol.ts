@@ -15,7 +15,7 @@ export type { Localized };
 export type { Genre };
 
 /** Bump when the message shapes change so mismatched builds refuse each other cleanly. */
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 5;
 
 /** Room capacity including the host. Everything else is array-based, so raising this is enough. */
 export const MAX_PLAYERS = 4;
