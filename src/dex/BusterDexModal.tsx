@@ -83,8 +83,8 @@ export function BusterDexModal({ t, lang, scale, onClose }: Props) {
           </button>
         </div>
 
-        {/* Genre tabs */}
-        <div role="tablist" className="flex gap-1.5 border-b-[3px] border-slate-200 bg-white px-4 py-2.5">
+        {/* Genre tabs: a fixed 6-column grid (2 rows for 11 tabs) so every tab stays visible in every language. */}
+        <div role="tablist" className="grid grid-cols-6 gap-1.5 border-b-[3px] border-slate-200 bg-white px-4 py-2">
           {(['all', ...GENRES] as const).map((g) => (
             <button
               key={g}
@@ -96,12 +96,13 @@ export function BusterDexModal({ t, lang, scale, onClose }: Props) {
                 sound.click();
                 setTab(g);
               }}
-              className={`flex flex-col items-center whitespace-nowrap rounded-xl border-[3px] border-slate-900 px-2 py-1 text-sm font-black leading-tight ${
+              title={g === 'all' ? t.dexAll : GENRE_LABELS[g][lang]}
+              className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border-[3px] border-slate-900 px-2 py-1 text-sm font-black leading-tight ${
                 tab === g ? 'bg-slate-900 text-amber-200' : 'bg-white hover:bg-amber-100'
               }`}
             >
-              <span>{g === 'all' ? `📚 ${t.dexAll}` : GENRE_SHORT[g][lang]}</span>
-              <span className="text-xs tabular-nums opacity-75">{countIn(g)}</span>
+              <span className="min-w-0 truncate">{g === 'all' ? `📚 ${t.dexAll}` : GENRE_SHORT[g][lang]}</span>
+              <span className="shrink-0 text-xs tabular-nums opacity-75">{countIn(g)}</span>
             </button>
           ))}
         </div>

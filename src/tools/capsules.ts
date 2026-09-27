@@ -31,7 +31,7 @@ const SKY = '#7dd3fc';
 const BUBBLE = '#bae6fd';
 const FONT = '"Hiragino Maru Gothic ProN", "BIZ UDPGothic", "Yu Gothic UI", Meiryo, system-ui, sans-serif';
 const EN_TITLE = 'AI Quick Draw Buster';
-const TITLE_1 = 'AI絵描き歌';
+const TITLE_1 = 'AIお絵描き';
 const TITLE_2 = 'バスター';
 
 const deg = (d: number) => (d * Math.PI) / 180;

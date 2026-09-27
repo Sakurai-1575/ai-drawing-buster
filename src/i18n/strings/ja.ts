@@ -1,6 +1,6 @@
 /** Japanese — the source language: every other dictionary must have exactly these keys. */
 export const ja = {
-  title: 'AI絵描き歌バスター',
+  title: 'AIお絵描きバスター',
   tagline: 'AIが描く線画を、誰よりも早く当てろ！',
   start: 'スタート',
   startKeys: '(Space / Enter)',

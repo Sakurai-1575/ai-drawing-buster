@@ -1,4 +1,4 @@
-# AI絵描き歌バスター / AI Drawing Buster
+# AIお絵描きバスター / AI Drawing Buster
 
 Real-time sketch quiz: guess what the AI is drawing before the 10-second timer runs out.
 React 18 + TypeScript + Vite + Tailwind CSS. Sound effects are Web Audio oscillators and all drawings are code; the only asset files are the BGM tracks in `public/audio/bgm/` (see `src/audio/BgmManager.ts` for the track list and original titles).
@@ -22,7 +22,7 @@ npm run build    # typecheck + production build to dist/
 | Mode | Rules | Personal best (localStorage) |
 | --- | --- | --- |
 | 🃏 Score Attack | 10 random quizzes, 10s each, score = time left × combo. Wrong answer: −3,000 / −4,000 / −5,000 (1st/2nd/3rd miss on a question, total floored at 0) + 3s answer lock while the AI keeps drawing | `adb.bestScore` (score) |
-| 🔥 Sudden Death | 3 lives; a wrong answer or a 10s timeout costs one. All 300 quizzes, no repeats (plus a 2s answer lock). The AI speeds up: Q1–10 1.0x, Q11–20 1.15x, Q21–30 1.3x, Q31+ 1.5x | `adb.best.sudden` (survived) |
+| 🔥 Sudden Death | 3 lives; a wrong answer or a 10s timeout costs one. All 500 quizzes, no repeats (plus a 2s answer lock). The AI speeds up: Q1–10 1.0x, Q11–20 1.15x, Q21–30 1.3x, Q31+ 1.5x | `adb.best.sudden` (survived) |
 | ⚡ Time Attack | One 3-minute clock, no per-question limit. Wrong answer = −5s off the clock + 2s input lock; 0.3s to the next drawing after a hit. Score = (1,000 + speed bonus) × combo | `adb.best.timeattack` (correct) |
 
 Every correct answer in any mode registers in the Buster Dex.
@@ -32,10 +32,11 @@ Every correct answer in any mode registers in the Buster Dex.
 src/
   data/quizzes.ts        Quiz types/helpers + quizzes 1–200 (ja/en text, stroke data), tagged with a genre and a Buster Dex comment
   data/quizzesVol2.ts    Quizzes 201–300
+  data/quizzesVol3.ts    Quizzes 301–500
   data/shapes.ts         Stroke helpers for the drawings (line, arc, curve, bumpy, roundRect, …)
-  data/drawTopics.ts     39 Mode B draw-only topics; Mode B draws from these + all 300 quizzes = 339
-  data/quizI18n/         Quiz translations per language (zh-CN / zh-TW / ko), loaded on demand and merged into QUIZZES by id
-  data/genres.ts         The 9 genres (incl. fashion, world culture & landmarks) and their labels in all 5 languages
+  data/drawTopics.ts     18 Mode B draw-only topics; Mode B draws from these + all 500 quizzes = 518
+  data/quizI18n/         Quiz + Mode B topic translations per language (zh-CN / zh-TW / ko), loaded on demand
+  data/genres.ts         The 10 genres (incl. fashion, fantasy & sci-fi, world culture & landmarks) and their labels in all 5 languages
   i18n/lang.ts           Supported languages (ja, en, zh-CN, zh-TW, ko), fallback rules, browser-language detection
   i18n/strings/          UI strings, one file per language (ja.ts is the source; the compiler enforces every key)
   audio/SoundManager.ts  Web Audio synth SFX
@@ -50,7 +51,7 @@ src/
 
 ## Languages
 UI strings, achievements, genres and Buster-kun's lines exist in all 5 languages (missing keys are compile errors).
-All 300 quizzes are translated into every language (`src/data/quizI18n/<lang>.ts`: `label`, three `misleads`, `comment`).
+All 500 quizzes and every Mode B draw-only topic are translated into every language (`src/data/quizI18n/<lang>.ts`: `label`, three `misleads`, `comment`).
 Only Japanese is built into the main bundle; the other languages' UI strings and quiz packs are separate chunks,
 fetched before the UI switches to them (`src/i18n/loadLanguage.ts`). Online multiplayer is a lazily loaded chunk too.
 When adding a quiz, add it to each of those files too — dev builds warn in the console about untranslated quizzes.
