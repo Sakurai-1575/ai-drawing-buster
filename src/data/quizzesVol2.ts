@@ -3,7 +3,7 @@
  * and the first strokes are chosen to suggest something else (one of the decoys).
  * Other languages' text lives in ./quizI18n/<lang>.ts.
  */
-import type { Quiz } from './quizzes';
+import type { Quiz } from './quizTypes';
 import { arc, bumpy, circle, closed, curve, ellipse, join, line, lobed, mirror, pentagram, place, rays, rect, roundRect, spiral, wave, zigzagArc, type Point, type Stroke } from './shapes';
 
 /** Point at `deg` (0° = right, 90° = down) on a circle. */

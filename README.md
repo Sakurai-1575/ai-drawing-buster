@@ -30,7 +30,9 @@ Every correct answer in any mode registers in the Buster Dex.
 ## Layout
 ```
 src/
-  data/quizzes.ts        Quiz types/helpers + quizzes 1–200 (ja/en text, stroke data), tagged with a genre and a Buster Dex comment
+  data/quizzes.ts        QUIZZES (all 500) + text helpers (quizOptions, quizComment, …) and translation merging
+  data/quizTypes.ts      Quiz types/constants only (no runtime deps)
+  data/quizzesVol1.ts    Quizzes 1–200 (ja/en text, stroke data), tagged with a genre and a Buster Dex comment
   data/quizzesVol2.ts    Quizzes 201–300
   data/quizzesVol3.ts    Quizzes 301–500
   data/shapes.ts         Stroke helpers for the drawings (line, arc, curve, bumpy, roundRect, …)
