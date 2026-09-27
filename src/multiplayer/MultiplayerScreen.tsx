@@ -4,7 +4,7 @@ import { sound } from '../audio/SoundManager';
 import { AnswerButtons } from '../components/AnswerButtons';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 import { MascotCommentator } from '../components/MascotCommentator';
-import type { Choices, Lang } from '../data/quizzes';
+import { quizOptions, type Choices, type Lang } from '../data/quizzes';
 import { REVEAL_DRAW_MS, TIME_LIMIT_MS, drawProgress } from '../game/engine';
 import { useMascot } from '../hooks/useMascot';
 import { fmt, type Dict } from '../i18n';
@@ -477,7 +477,8 @@ function Game({ t, lang, scale, view, match }: { t: Dict; lang: Lang; scale: num
     );
   }
 
-  const choices = round.order.map((i) => quiz.choices[lang][i]) as Choices;
+  const options = quizOptions(quiz, lang);
+  const choices = round.order.map((i) => options[i]) as Choices;
   const mine = view.mine;
   const lockRemaining = Math.max(0, mine.lockUntil - now);
   const reveal: 'drawing' | 'correct' | 'timeout' = view.roundEnd ? 'timeout' : mine.correctSlot !== null ? 'correct' : 'drawing';

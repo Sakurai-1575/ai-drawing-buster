@@ -10,7 +10,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import { DRAW_TOPICS, DRAW_TOPIC_BY_ID } from '../data/drawTopics';
-import { QUIZZES, type Quiz } from '../data/quizzes';
+import { ANSWER_INDEX, QUIZZES, quizOptions, type Choices, type Quiz } from '../data/quizzes';
+import { LANGS, localize, type Lang } from '../i18n/lang';
 import { PENALTY_MS, TIME_LIMIT_MS } from '../game/engine';
 import {
   DRAW_ROUND_MS,
@@ -283,27 +284,34 @@ function appendChunk(sketch: SketchStroke[], chunk: StrokeChunk): SketchStroke[]
   return next;
 }
 
-/** Topic → the four options (localized) in a shuffled display order, and where the answer landed. */
+/** Every language's value, from a per-language function (fallbacks already resolved). */
+function perLang<T>(f: (lang: Lang) => T): Localized<T> {
+  return Object.fromEntries(LANGS.map((l) => [l, f(l)])) as Localized<T>;
+}
+
+/**
+ * Topic → the four options in a shuffled display order for every language (guests may each play
+ * in a different one), and where the answer landed.
+ */
 export function buildChoices(topic: TopicRef): { choices: DrawRoundSpec['choices']; answerSlot: number; answer: Localized<string> } {
-  if ('quizId' in topic) {
-    const quiz = QUIZ_BY_ID.get(topic.quizId)!;
-    const order = shuffle([0, 1, 2, 3]);
-    const pick = (arr: readonly string[]) => order.map((i) => arr[i]) as [string, string, string, string];
-    return {
-      choices: { ja: pick(quiz.choices.ja), en: pick(quiz.choices.en) },
-      answerSlot: order.indexOf(quiz.answer),
-      answer: { ja: quiz.labels.ja, en: quiz.labels.en },
-    };
+  if ('custom' in topic) {
+    const opts = shuffle([topic.custom.answer, ...topic.custom.dummies]) as Choices;
+    return { choices: perLang(() => opts), answerSlot: opts.indexOf(topic.custom.answer), answer: perLang(() => topic.custom.answer) };
   }
-  if ('drawId' in topic) {
-    const t = DRAW_TOPIC_BY_ID.get(topic.drawId)!;
-    const order = shuffle([0, 1, 2, 3]);
-    const options = [t.answer, ...t.decoys];
-    const pick = (lang: 'ja' | 'en') => order.map((i) => options[i][lang]) as [string, string, string, string];
-    return { choices: { ja: pick('ja'), en: pick('en') }, answerSlot: order.indexOf(0), answer: t.answer };
-  }
-  const opts = shuffle([topic.custom.answer, ...topic.custom.dummies]) as [string, string, string, string];
-  return { choices: { ja: opts, en: opts }, answerSlot: opts.indexOf(topic.custom.answer), answer: { ja: topic.custom.answer, en: topic.custom.answer } };
+  // Answer at ANSWER_INDEX (0) for both built-in kinds.
+  const options: (lang: Lang) => Choices =
+    'quizId' in topic
+      ? (lang) => quizOptions(QUIZ_BY_ID.get(topic.quizId)!, lang)
+      : (lang) => {
+          const t = DRAW_TOPIC_BY_ID.get(topic.drawId)!;
+          return [t.answer, ...t.decoys].map((x) => localize(x, lang)) as Choices;
+        };
+  const order = shuffle([0, 1, 2, 3]);
+  return {
+    choices: perLang((lang) => order.map((i) => options(lang)[i]) as Choices),
+    answerSlot: order.indexOf(ANSWER_INDEX),
+    answer: perLang((lang) => options(lang)[ANSWER_INDEX]),
+  };
 }
 
 /** Mode B's built-in pool: every AI quiz plus the draw-only topics, optionally narrowed to genres. */
@@ -642,7 +650,7 @@ export function useMatch() {
       h.drawerId = null;
       h.topicQuizId = null;
       h.roundDuration = TIME_LIMIT_MS;
-      h.answerSlot = r.order.indexOf(QUIZ_BY_ID.get(r.quizId)!.answer);
+      h.answerSlot = r.order.indexOf(ANSWER_INDEX);
       hostBroadcast({ t: 'round', round: { index, quizId: r.quizId, order: r.order, startAt: h.roundStart } });
     } else {
       const { choices, answerSlot, answer } = buildChoices(r.topic);
@@ -1039,7 +1047,7 @@ export function useMatch() {
       if (v.round) {
         // Mode A: the quiz is public, so judge locally for instant feedback.
         if (elapsed > TIME_LIMIT_MS) return;
-        const correct = v.round.order[slot] === QUIZ_BY_ID.get(v.round.quizId)?.answer;
+        const correct = QUIZ_BY_ID.has(v.round.quizId) && v.round.order[slot] === ANSWER_INDEX;
         update((x) => ({
           ...x,
           mine: correct

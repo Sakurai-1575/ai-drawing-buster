@@ -7,32 +7,67 @@
  */
 
 import type { MascotExpression } from '../mascotLines';
+import { localize, resolveLang, type BaseLang, type Lang, type Localized } from '../i18n/lang';
 import type { Genre } from './genres';
+import { QUIZ_ZH_CN } from './quizI18n/zh-CN';
+import { QUIZ_ZH_TW } from './quizI18n/zh-TW';
+import { QUIZ_KO } from './quizI18n/ko';
 
-export type Lang = 'ja' | 'en';
+export type { Lang, Localized };
 export type Point = [x: number, y: number];
 export type Stroke = Point[];
 
-export interface Localized<T> {
-  ja: T;
-  en: T;
-}
-
+export type Decoys = [string, string, string];
+/** The four options: the answer first, then the three decoys. Display order is shuffled separately. */
 export type Choices = [string, string, string, string];
+
+/** Index of the answer in `quizOptions` — always the label. */
+export const ANSWER_INDEX = 0;
 
 export interface Quiz {
   id: string;
   genre: Genre;
-  labels: Localized<string>;
+  /** The correct answer. */
+  label: Localized<string>;
+  /** Three wrong options — things the early strokes are meant to look like. */
+  misleads: Localized<Decoys>;
   /** Buster Dex: Buster-kun's comment once discovered — sore-loser snark, then a soft, cute aside. */
-  dexComment: Localized<string>;
+  comment: Localized<string>;
   /** Buster-kun's face next to the comment. */
   dexMood: MascotExpression;
-  /** Four choices per language, index-aligned across languages. */
-  choices: Localized<Choices>;
-  /** Index of the correct entry in `choices`. */
-  answer: number;
   strokes: Stroke[];
+}
+
+/** One quiz's text in one language (translation packs in `./quizI18n/`). */
+export interface QuizText {
+  label: string;
+  misleads: Decoys;
+  comment: string;
+}
+
+/** Quiz id → translation. Unknown ids are reported in dev builds. */
+export type QuizTranslations = Record<string, QuizText>;
+
+/**
+ * The language a quiz's answer and decoys are actually shown in for `lang`. Label and decoys
+ * always fall back together — mixing languages would make the answer stand out.
+ */
+export function quizLang(quiz: Quiz, lang: Lang): Lang {
+  return resolveLang(lang, (l) => quiz.label[l] !== undefined && quiz.misleads[l] !== undefined);
+}
+
+export function quizLabel(quiz: Quiz, lang: Lang): string {
+  return quiz.label[quizLang(quiz, lang)]!;
+}
+
+/** Answer + decoys in `lang` (answer at ANSWER_INDEX). */
+export function quizOptions(quiz: Quiz, lang: Lang): Choices {
+  const l = quizLang(quiz, lang);
+  return [quiz.label[l]!, ...quiz.misleads[l]!];
+}
+
+export function quizComment(quiz: Quiz, lang: Lang): string {
+  return localize(quiz.comment, lang);
 }
 
 // ---------------------------------------------------------------------------
@@ -184,18 +219,17 @@ function cosmosPetal(): Stroke {
 // Quizzes
 // ---------------------------------------------------------------------------
 
-export const QUIZZES: Quiz[] = [
+const BASE_QUIZZES: Quiz[] = [
   {
     id: 'apple',
     genre: 'food',
-    labels: { ja: 'リンゴ', en: 'Apple' },
-    dexComment: {
+    label: { ja: 'リンゴ', en: 'Apple' },
+    comment: {
       ja: "ヘタと葉っぱしか描いてないのに当てるなんて反則ニャ！……でも、すりおろしリンゴは甘くておいしいから許してやるニャ。",
       en: "Guessing it from just a stem and a leaf is total cheating, nya! ...Though grated apple is sweet and yummy, so I guess you're forgiven.",
     },
     dexMood: 'panic',
-    choices: { ja: ['リンゴ', 'トマト', 'サクランボ', 'カキ'], en: ['Apple', 'Tomato', 'Cherry', 'Persimmon'] },
-    answer: 0,
+    misleads: { ja: ['トマト', 'サクランボ', 'カキ'], en: ['Tomato', 'Cherry', 'Persimmon'] },
     strokes: [
       line([0.5, 0.3], [0.53, 0.1]),
       join(curve([0.52, 0.18], [0.62, 0.05], [0.75, 0.13]), curve([0.75, 0.13], [0.65, 0.26], [0.52, 0.18])),
@@ -207,14 +241,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'airplane',
     genre: 'vehicle',
-    labels: { ja: '飛行機', en: 'Airplane' },
-    dexComment: {
+    label: { ja: '飛行機', en: 'Airplane' },
+    comment: {
       ja: "最初の翼、絶対に鳥だと思ったはずニャ！……窓側の席で雲をながめるのが、ボクのひそかな夢ニャ。",
       en: "Those first wings totally looked like a bird, nya! ...Watching clouds from a window seat is my secret dream.",
     },
     dexMood: 'smug',
-    choices: { ja: ['飛行機', '鳥', 'トンボ', '十字架'], en: ['Airplane', 'Bird', 'Dragonfly', 'Cross'] },
-    answer: 0,
+    misleads: { ja: ['鳥', 'トンボ', '十字架'], en: ['Bird', 'Dragonfly', 'Cross'] },
     strokes: [
       line([0.5, 0.4], [0.92, 0.56], [0.92, 0.62], [0.5, 0.53], [0.08, 0.62], [0.08, 0.56], [0.5, 0.4]),
       line([0.5, 0.78], [0.68, 0.86], [0.68, 0.9], [0.32, 0.9], [0.32, 0.86], [0.5, 0.78]),
@@ -225,14 +258,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pizza',
     genre: 'food',
-    labels: { ja: 'ピザ', en: 'Pizza' },
-    dexComment: {
+    label: { ja: 'ピザ', en: 'Pizza' },
+    comment: {
       ja: "丸を3つ並べた時点ではただの水玉模様だったはずニャ！……チーズがびよーんって伸びるとこ、大好きニャ。",
       en: "Three little circles were just polka dots, nya! ...I love the part where the cheese stretches out all long.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ピザ', 'スイカ', 'チーズ', 'おにぎり'], en: ['Pizza', 'Watermelon', 'Cheese', 'Rice ball'] },
-    answer: 0,
+    misleads: { ja: ['スイカ', 'チーズ', 'おにぎり'], en: ['Watermelon', 'Cheese', 'Rice ball'] },
     strokes: [
       circle(0.44, 0.36, 0.06),
       circle(0.6, 0.5, 0.05),
@@ -246,14 +278,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'glasses',
     genre: 'item',
-    labels: { ja: 'メガネ', en: 'Glasses' },
-    dexComment: {
+    label: { ja: 'メガネ', en: 'Glasses' },
+    comment: {
       ja: "丸が2つ並んだだけで当てるなんて、見透かされてる気分ニャ……ボクも画面にメガネかけたら、インテリに見えるかニャ？",
       en: "Two circles and you already knew? I feel so seen through, nya... Would I look smart with glasses on my screen?",
     },
     dexMood: 'panic',
-    choices: { ja: ['メガネ', '自転車', '双眼鏡', 'フクロウ'], en: ['Glasses', 'Bicycle', 'Binoculars', 'Owl'] },
-    answer: 0,
+    misleads: { ja: ['自転車', '双眼鏡', 'フクロウ'], en: ['Bicycle', 'Binoculars', 'Owl'] },
     strokes: [
       circle(0.29, 0.52, 0.14),
       circle(0.71, 0.52, 0.14),
@@ -265,14 +296,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'cat',
     genre: 'animal',
-    labels: { ja: 'ネコ', en: 'Cat' },
-    dexComment: {
+    label: { ja: 'ネコ', en: 'Cat' },
+    comment: {
       ja: "ヒゲから描くのはボクだけの秘密の描き順だったのにニャ！……まあ同族のよしみで、ちょっと手加減しちゃったかもニャ。",
       en: "Starting with the whiskers was my secret stroke order, nya! ...Fine, maybe I went easy on you. Cat solidarity.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ネコ', 'キツネ', 'トラ', 'ネズミ'], en: ['Cat', 'Fox', 'Tiger', 'Mouse'] },
-    answer: 0,
+    misleads: { ja: ['キツネ', 'トラ', 'ネズミ'], en: ['Fox', 'Tiger', 'Mouse'] },
     strokes: [
       line([0.06, 0.58], [0.32, 0.63]),
       mirror(line([0.06, 0.58], [0.32, 0.63])),
@@ -296,14 +326,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'clock',
     genre: 'item',
-    labels: { ja: '時計', en: 'Clock' },
-    dexComment: {
+    label: { ja: '時計', en: 'Clock' },
+    comment: {
       ja: "針から描き始めた瞬間に秒速でボタン押されたニャ。人間の動体視力、ちょっとキモいニャ……チクタクの音は落ち着くけどニャ。",
       en: "You slammed that button the second the hands appeared, creepy reflexes nya... Tick-tock sounds are kinda relaxing, though.",
     },
     dexMood: 'panic',
-    choices: { ja: ['時計', '方位磁石', '分度器', 'ハンドル'], en: ['Clock', 'Compass', 'Protractor', 'Steering wheel'] },
-    answer: 0,
+    misleads: { ja: ['方位磁石', '分度器', 'ハンドル'], en: ['Compass', 'Protractor', 'Steering wheel'] },
     strokes: [
       line([0.5, 0.5], [0.5, 0.24]),
       line([0.5, 0.5], [0.68, 0.6]),
@@ -320,14 +349,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'fish',
     genre: 'creature',
-    labels: { ja: '魚', en: 'Fish' },
-    dexComment: {
+    label: { ja: '魚', en: 'Fish' },
+    comment: {
       ja: "しっぽの三角だけならリボンにしか見えないはずニャ！……焼き魚の皮のパリパリしたとこ、ボクは好きニャ。",
       en: "A tail triangle alone should look like a ribbon, nya! ...I really like the crispy skin on grilled fish.",
     },
     dexMood: 'smug',
-    choices: { ja: ['魚', '鳥', '葉っぱ', 'キャンディ'], en: ['Fish', 'Bird', 'Leaf', 'Candy'] },
-    answer: 0,
+    misleads: { ja: ['鳥', '葉っぱ', 'キャンディ'], en: ['Bird', 'Leaf', 'Candy'] },
     strokes: [
       line([0.78, 0.5], [0.94, 0.33], [0.94, 0.67], [0.78, 0.5]),
       curve([0.78, 0.5], [0.5, 0.18], [0.1, 0.5]),
@@ -340,14 +368,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'umbrella',
     genre: 'item',
-    labels: { ja: '傘', en: 'Umbrella' },
-    dexComment: {
+    label: { ja: '傘', en: 'Umbrella' },
+    comment: {
       ja: "持ち手のカーブだけならステッキだと思ったはずニャ？……雨の日の水たまり、ついジャンプしたくなるニャ。",
       en: "Just the handle curve should've looked like a cane, right? ...Puddles on rainy days make me want to jump in.",
     },
     dexMood: 'smug',
-    choices: { ja: ['傘', 'キノコ', 'クラゲ', 'ステッキ'], en: ['Umbrella', 'Mushroom', 'Jellyfish', 'Cane'] },
-    answer: 0,
+    misleads: { ja: ['キノコ', 'クラゲ', 'ステッキ'], en: ['Mushroom', 'Jellyfish', 'Cane'] },
     strokes: [
       join(line([0.5, 0.45], [0.5, 0.82]), arc(0.43, 0.82, 0.07, 0.07, 0, 180, 16)),
       arc(0.5, 0.45, 0.4, 0.33, 180, 360, 36),
@@ -365,14 +392,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'car',
     genre: 'vehicle',
-    labels: { ja: '車', en: 'Car' },
-    dexComment: {
+    label: { ja: '車', en: 'Car' },
+    comment: {
       ja: "タイヤ2つでバレるのはボクの計算外ニャ！……助手席でドライブするの、ちょっと憧れてるニャ。",
       en: "Getting caught at two tires was not in my calculations, nya! ...I kinda dream of riding shotgun on a drive.",
     },
     dexMood: 'panic',
-    choices: { ja: ['車', 'バス', 'スケートボード', 'ベビーカー'], en: ['Car', 'Bus', 'Skateboard', 'Stroller'] },
-    answer: 0,
+    misleads: { ja: ['バス', 'スケートボード', 'ベビーカー'], en: ['Bus', 'Skateboard', 'Stroller'] },
     strokes: [
       circle(0.28, 0.72, 0.09),
       circle(0.72, 0.72, 0.09),
@@ -385,14 +411,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'house',
     genre: 'building',
-    labels: { ja: '家', en: 'House' },
-    dexComment: {
+    label: { ja: '家', en: 'House' },
+    comment: {
       ja: "ドアから描くのは玄関から入るマナーニャ！当てたのはたまたまニャ！……えんとつのあるお家、住んでみたいニャ。",
       en: "Drawing the door first is just good manners, nya! You got lucky! ...I'd love to live in a house with a chimney.",
     },
     dexMood: 'smug',
-    choices: { ja: ['家', 'テント', '犬小屋', '神社'], en: ['House', 'Tent', 'Doghouse', 'Shrine'] },
-    answer: 0,
+    misleads: { ja: ['テント', '犬小屋', '神社'], en: ['Tent', 'Doghouse', 'Shrine'] },
     strokes: [
       line([0.43, 0.88], [0.43, 0.67], [0.57, 0.67], [0.57, 0.88]),
       line([0.64, 0.52], [0.76, 0.52], [0.76, 0.64], [0.64, 0.64], [0.64, 0.52]),
@@ -405,27 +430,25 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'star',
     genre: 'plant',
-    labels: { ja: '星', en: 'Star' },
-    dexComment: {
+    label: { ja: '星', en: 'Star' },
+    comment: {
       ja: "最初は山だったのに、一筆書きの途中で見抜かれたニャ……流れ星を見たら「もっと上手に描けますように」ってお願いするニャ。",
       en: "It was a mountain at first, and you saw through it mid-stroke, nya... If I see a shooting star, I'll wish to draw better.",
     },
     dexMood: 'panic',
-    choices: { ja: ['星', 'ヒトデ', '花', '雪の結晶'], en: ['Star', 'Starfish', 'Flower', 'Snowflake'] },
-    answer: 0,
+    misleads: { ja: ['ヒトデ', '花', '雪の結晶'], en: ['Starfish', 'Flower', 'Snowflake'] },
     strokes: [pentagram(0.5, 0.54, 0.42), ...rays(0.86, 0.14, 0.02, 0.07, 4, -45)],
   },
   {
     id: 'banana',
     genre: 'food',
-    labels: { ja: 'バナナ', en: 'Banana' },
-    dexComment: {
+    label: { ja: 'バナナ', en: 'Banana' },
+    comment: {
       ja: "どう見ても三日月だったニャ！夜空に謝るニャ！……でも、バナナの皮でツルッと転ぶの、一回やってみたいニャ。",
       en: "That was clearly a crescent moon, nya! Apologize to the night sky! ...Still, I kinda want to slip on a banana peel once.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['バナナ', '三日月', 'キュウリ', 'ブーメラン'], en: ['Banana', 'Crescent moon', 'Cucumber', 'Boomerang'] },
-    answer: 0,
+    misleads: { ja: ['三日月', 'キュウリ', 'ブーメラン'], en: ['Crescent moon', 'Cucumber', 'Boomerang'] },
     strokes: [
       arc(0.5, 0.25, 0.4, 0.55, 20, 160, 32),
       line([0.124, 0.438], [0.19, 0.344]),
@@ -437,14 +460,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'ship',
     genre: 'vehicle',
-    labels: { ja: '船', en: 'Ship' },
-    dexComment: {
+    label: { ja: '船', en: 'Ship' },
+    comment: {
       ja: "旗を立てただけで船だとわかるなんて、海の男かニャ？……波の音を聞いてると、なんだか眠くなるニャ。",
       en: "One flag and you knew it was a ship? What are you, a sailor, nya? ...The sound of waves always makes me sleepy.",
     },
     dexMood: 'smug',
-    choices: { ja: ['船', '旗', 'お風呂', '靴'], en: ['Ship', 'Flag', 'Bathtub', 'Shoe'] },
-    answer: 0,
+    misleads: { ja: ['旗', 'お風呂', '靴'], en: ['Flag', 'Bathtub', 'Shoe'] },
     strokes: [
       join(line([0.5, 0.46], [0.5, 0.1]), line([0.5, 0.1], [0.66, 0.15], [0.5, 0.2])),
       line([0.12, 0.6], [0.88, 0.6], [0.74, 0.8], [0.26, 0.8], [0.12, 0.6]),
@@ -457,14 +479,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'moon',
     genre: 'plant',
-    labels: { ja: '月', en: 'Moon' },
-    dexComment: {
+    label: { ja: '月', en: 'Moon' },
+    comment: {
       ja: "キラキラから描いたのに、三日月の形でバレバレだったニャ……お月見だんご、ボクの分も取っといてニャ。",
       en: "I started with the sparkles, but the crescent gave it away, nya... Save me a moon-viewing dumpling, okay?",
     },
     dexMood: 'panic',
-    choices: { ja: ['月', 'バナナ', 'クロワッサン', 'ツメ'], en: ['Moon', 'Banana', 'Croissant', 'Fingernail'] },
-    answer: 0,
+    misleads: { ja: ['バナナ', 'クロワッサン', 'ツメ'], en: ['Banana', 'Croissant', 'Fingernail'] },
     strokes: [
       ...rays(0.78, 0.26, 0.015, 0.06, 4, 0),
       ...rays(0.84, 0.6, 0.01, 0.045, 4, 0),
@@ -475,14 +496,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'spoon',
     genre: 'item',
-    labels: { ja: 'スプーン', en: 'Spoon' },
-    dexComment: {
+    label: { ja: 'スプーン', en: 'Spoon' },
+    comment: {
       ja: "持ち手の棒だけなら何にでも見えるはずニャ！……プリンをすくう瞬間が、いちばんしあわせニャ。",
       en: "A handle stick could be anything, nya! ...The moment you scoop up pudding is pure happiness.",
     },
     dexMood: 'smug',
-    choices: { ja: ['スプーン', '虫メガネ', 'マラカス', 'テニスラケット'], en: ['Spoon', 'Magnifying glass', 'Maracas', 'Tennis racket'] },
-    answer: 0,
+    misleads: { ja: ['虫メガネ', 'マラカス', 'テニスラケット'], en: ['Magnifying glass', 'Maracas', 'Tennis racket'] },
     strokes: [
       join(line([0.47, 0.52], [0.46, 0.9]), arc(0.5, 0.9, 0.04, 0.04, 180, 0, 10), line([0.54, 0.9], [0.53, 0.52])),
       arc(0.5, 0.3, 0.15, 0.22, 90, 450, 36),
@@ -492,14 +512,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sun',
     genre: 'plant',
-    labels: { ja: '太陽', en: 'Sun' },
-    dexComment: {
+    label: { ja: '太陽', en: 'Sun' },
+    comment: {
       ja: "光線から描いたらウニにしか見えないと思ったのにニャ！……日なたぼっこ、ボクの回路にもちょうどいいニャ。",
       en: "Rays first should've looked like a sea urchin, nya! ...Sunbathing is just the right warmth for my circuits.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['太陽', '花', 'ウニ', 'ライオン'], en: ['Sun', 'Flower', 'Sea urchin', 'Lion'] },
-    answer: 0,
+    misleads: { ja: ['花', 'ウニ', 'ライオン'], en: ['Flower', 'Sea urchin', 'Lion'] },
     strokes: [
       ...rays(0.5, 0.5, 0.31, 0.44, 8),
       circle(0.5, 0.5, 0.23, -90, 40),
@@ -511,14 +530,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'icecream',
     genre: 'food',
-    labels: { ja: 'アイスクリーム', en: 'Ice cream' },
-    dexComment: {
+    label: { ja: 'アイスクリーム', en: 'Ice cream' },
+    comment: {
       ja: "コーンの三角はピザだと思わせる作戦だったニャ！……溶ける前に食べきれないあの悩み、わかるニャ。",
       en: "The cone triangle was supposed to fool you into pizza, nya! ...I get the struggle of finishing before it melts.",
     },
     dexMood: 'smug',
-    choices: { ja: ['アイスクリーム', 'たいまつ', '電球', 'マイク'], en: ['Ice cream', 'Torch', 'Light bulb', 'Microphone'] },
-    answer: 0,
+    misleads: { ja: ['たいまつ', '電球', 'マイク'], en: ['Torch', 'Light bulb', 'Microphone'] },
     strokes: [
       line([0.29, 0.475], [0.5, 0.93], [0.71, 0.475]),
       line([0.4, 0.5], [0.58, 0.74]),
@@ -535,14 +553,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bicycle',
     genre: 'vehicle',
-    labels: { ja: '自転車', en: 'Bicycle' },
-    dexComment: {
+    label: { ja: '自転車', en: 'Bicycle' },
+    comment: {
       ja: "丸が2つでメガネ……のはずだったのに、フレームで台無しニャ！……補助輪なしで乗れた日のこと、ボクも自慢したいニャ。",
       en: "Two circles meant glasses... until the frame ruined it, nya! ...I want to brag about riding without training wheels too.",
     },
     dexMood: 'panic',
-    choices: { ja: ['自転車', 'メガネ', 'バイク', '車椅子'], en: ['Bicycle', 'Glasses', 'Motorbike', 'Wheelchair'] },
-    answer: 0,
+    misleads: { ja: ['メガネ', 'バイク', '車椅子'], en: ['Glasses', 'Motorbike', 'Wheelchair'] },
     strokes: [
       circle(0.24, 0.64, 0.17, -90, 40),
       circle(0.76, 0.64, 0.17, -90, 40),
@@ -558,14 +575,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'onigiri',
     genre: 'food',
-    labels: { ja: 'おにぎり', en: 'Rice ball' },
-    dexComment: {
+    label: { ja: 'おにぎり', en: 'Rice ball' },
+    comment: {
       ja: "山を描いたつもりが、のりを貼ったらおにぎりになってたニャ！……具は梅干しが一番ニャ。すっぱいのがクセになるニャ。",
       en: "I drew a mountain, then the seaweed turned it into a rice ball, nya! ...Pickled plum is the best filling. So sour, so good.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['おにぎり', '山', 'サンドイッチ', '三角コーン'], en: ['Rice ball', 'Mountain', 'Sandwich', 'Traffic cone'] },
-    answer: 0,
+    misleads: { ja: ['山', 'サンドイッチ', '三角コーン'], en: ['Mountain', 'Sandwich', 'Traffic cone'] },
     strokes: [
       join(curve([0.1, 0.8], [0.28, 0.42], [0.44, 0.2]), curve([0.44, 0.2], [0.5, 0.1], [0.56, 0.2]), curve([0.56, 0.2], [0.72, 0.42], [0.9, 0.8])),
       join(curve([0.9, 0.8], [0.95, 0.9], [0.82, 0.9]), line([0.82, 0.9], [0.18, 0.9]), curve([0.18, 0.9], [0.05, 0.9], [0.1, 0.8])),
@@ -576,14 +592,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'hotairballoon',
     genre: 'vehicle',
-    labels: { ja: '気球', en: 'Hot air balloon' },
-    dexComment: {
+    label: { ja: '気球', en: 'Hot air balloon' },
+    comment: {
       ja: "電球だと思わせてから、空に飛ばしてやったニャ！……いつか雲の上でお昼寝してみたいニャ。",
       en: "Made you think light bulb, then launched it into the sky, nya! ...Someday I want to nap on top of the clouds.",
     },
     dexMood: 'smug',
-    choices: { ja: ['気球', '電球', '風船', 'パラシュート'], en: ['Hot air balloon', 'Light bulb', 'Balloon', 'Parachute'] },
-    answer: 0,
+    misleads: { ja: ['電球', '風船', 'パラシュート'], en: ['Light bulb', 'Balloon', 'Parachute'] },
     strokes: [
       join(curve([0.4, 0.7], [0.36, 0.64], [0.288, 0.572]), arc(0.5, 0.36, 0.3, 0.3, 135, 405, 40), curve([0.712, 0.572], [0.64, 0.64], [0.6, 0.7])),
       line([0.4, 0.7], [0.6, 0.7]),
@@ -597,14 +612,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'cherry',
     genre: 'food',
-    labels: { ja: 'サクランボ', en: 'Cherries' },
-    dexComment: {
+    label: { ja: 'サクランボ', en: 'Cherries' },
+    comment: {
       ja: "1個だけ描いたらリンゴに見えるはずだったニャ……2つ並ぶと仲良しに見えて、ちょっとうらやましいニャ。",
       en: "Just one should've looked like an apple, nya... Two side by side look like best friends. I'm a little jealous.",
     },
     dexMood: 'smug',
-    choices: { ja: ['サクランボ', 'リンゴ', 'ブドウ', 'トマト'], en: ['Cherries', 'Apple', 'Grapes', 'Tomato'] },
-    answer: 0,
+    misleads: { ja: ['リンゴ', 'ブドウ', 'トマト'], en: ['Apple', 'Grapes', 'Tomato'] },
     strokes: [
       circle(0.33, 0.7, 0.16, -90, 36),
       curve([0.33, 0.54], [0.38, 0.35], [0.55, 0.15]),
@@ -617,14 +631,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bomb',
     genre: 'item',
-    labels: { ja: '爆弾', en: 'Bomb' },
-    dexComment: {
+    label: { ja: '爆弾', en: 'Bomb' },
+    comment: {
       ja: "ただのボールに見せかけて、導火線でドッカーンの予定だったニャ！……火花のパチパチ、実はちょっとキレイで好きニャ。",
       en: "It was just a ball until the fuse went KABOOM, nya! ...Honestly, the crackling sparks are kinda pretty.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['爆弾', 'ボール', '時計', 'ヨーヨー'], en: ['Bomb', 'Ball', 'Clock', 'Yo-yo'] },
-    answer: 0,
+    misleads: { ja: ['ボール', '時計', 'ヨーヨー'], en: ['Ball', 'Clock', 'Yo-yo'] },
     strokes: [
       circle(0.44, 0.6, 0.32, -90, 48),
       arc(0.44, 0.6, 0.22, 0.22, 200, 250, 12),
@@ -636,14 +649,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'snail',
     genre: 'creature',
-    labels: { ja: 'カタツムリ', en: 'Snail' },
-    dexComment: {
+    label: { ja: 'カタツムリ', en: 'Snail' },
+    comment: {
       ja: "うずまきはキャンディに見えるって、統計で決まってるニャ！……ゆっくり進むのも悪くないって、カタツムリに教わったニャ。",
       en: "Statistics say spirals look like lollipops, nya! ...A snail taught me that going slow isn't so bad.",
     },
     dexMood: 'smug',
-    choices: { ja: ['カタツムリ', 'ペロペロキャンディ', 'アンモナイト', 'ナメクジ'], en: ['Snail', 'Lollipop', 'Ammonite', 'Slug'] },
-    answer: 0,
+    misleads: { ja: ['ペロペロキャンディ', 'アンモナイト', 'ナメクジ'], en: ['Lollipop', 'Ammonite', 'Slug'] },
     strokes: [
       spiral(0.42, 0.5, 0.01, 0.22, 2.5),
       circle(0.42, 0.5, 0.28, 180, 44),
@@ -657,14 +669,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'snowman',
     genre: 'plant',
-    labels: { ja: '雪だるま', en: 'Snowman' },
-    dexComment: {
+    label: { ja: '雪だるま', en: 'Snowman' },
+    comment: {
       ja: "丸2つでだるまに見せる、完璧な作戦だったニャ……バケツの帽子、ボクの頭にもかぶせてほしいニャ。",
       en: "Two circles for a daruma doll was a flawless plan, nya... Put a bucket hat on my head too, please.",
     },
     dexMood: 'smug',
-    choices: { ja: ['雪だるま', 'だるま', 'ひょうたん', 'お団子'], en: ['Snowman', 'Daruma doll', 'Gourd', 'Dumplings'] },
-    answer: 0,
+    misleads: { ja: ['だるま', 'ひょうたん', 'お団子'], en: ['Daruma doll', 'Gourd', 'Dumplings'] },
     strokes: [
       circle(0.5, 0.7, 0.22, -90, 40),
       circle(0.5, 0.34, 0.15, 90, 32),
@@ -684,14 +695,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'rabbit',
     genre: 'animal',
-    labels: { ja: 'ウサギ', en: 'Rabbit' },
-    dexComment: {
+    label: { ja: 'ウサギ', en: 'Rabbit' },
+    comment: {
       ja: "ピースサインにしか見えない耳を描いたのに当てるとか、ズルいニャ！……もふもふの手ざわり、一度でいいから味わいたいニャ。",
       en: "Those ears were a perfect peace sign, and you still got it? Unfair, nya! ...I'd love to feel that fluffy fur just once.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ウサギ', 'ピースサイン', 'ネコ', 'クマ'], en: ['Rabbit', 'Peace sign', 'Cat', 'Bear'] },
-    answer: 0,
+    misleads: { ja: ['ピースサイン', 'ネコ', 'クマ'], en: ['Peace sign', 'Cat', 'Bear'] },
     strokes: [
       ellipse(0.38, 0.22, 0.065, 0.17),
       ellipse(0.62, 0.22, 0.065, 0.17),
@@ -707,14 +717,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'turtle',
     genre: 'animal',
-    labels: { ja: 'カメ', en: 'Turtle' },
-    dexComment: {
+    label: { ja: 'カメ', en: 'Turtle' },
+    comment: {
       ja: "ヘルメットだと思ったニャ？甘いニャ！……のんびり歩くカメさんとは、気が合いそうニャ。",
       en: "Thought it was a helmet? Too naive, nya! ...I think I'd get along with a slow-walking turtle.",
     },
     dexMood: 'smug',
-    choices: { ja: ['カメ', 'ヘルメット', 'テントウムシ', 'ハンバーガー'], en: ['Turtle', 'Helmet', 'Ladybug', 'Hamburger'] },
-    answer: 0,
+    misleads: { ja: ['ヘルメット', 'テントウムシ', 'ハンバーガー'], en: ['Helmet', 'Ladybug', 'Hamburger'] },
     strokes: [
       join(arc(0.5, 0.62, 0.3, 0.3, 180, 360, 32), line([0.8, 0.62], [0.2, 0.62])),
       curve([0.3, 0.6], [0.33, 0.46], [0.42, 0.35]),
@@ -730,14 +739,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pig',
     genre: 'animal',
-    labels: { ja: 'ブタ', en: 'Pig' },
-    dexComment: {
+    label: { ja: 'ブタ', en: 'Pig' },
+    comment: {
       ja: "鼻から描いたら、絶対コンセントだと思うはずニャ！……ブタさんの鼻って実はすごく優秀らしいニャ。尊敬するニャ。",
       en: "Nose first should scream power outlet, nya! ...Apparently pig noses are super talented. I respect that.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ブタ', 'コンセント', 'ボタン', 'ウシ'], en: ['Pig', 'Power outlet', 'Button', 'Cow'] },
-    answer: 0,
+    misleads: { ja: ['コンセント', 'ボタン', 'ウシ'], en: ['Power outlet', 'Button', 'Cow'] },
     strokes: [
       ellipse(0.5, 0.6, 0.12, 0.08),
       circle(0.46, 0.6, 0.02, -90, 10),
@@ -753,14 +761,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'owl',
     genre: 'animal',
-    labels: { ja: 'フクロウ', en: 'Owl' },
-    dexComment: {
+    label: { ja: 'フクロウ', en: 'Owl' },
+    comment: {
       ja: "目だけで双眼鏡を連想させる作戦、見破られたニャ……夜ふかし仲間として、フクロウとは仲良くしたいニャ。",
       en: "Eyes first to suggest binoculars, and you saw right through it, nya... As a fellow night owl, I want to be friends.",
     },
     dexMood: 'panic',
-    choices: { ja: ['フクロウ', '双眼鏡', 'ネコ', 'ペンギン'], en: ['Owl', 'Binoculars', 'Cat', 'Penguin'] },
-    answer: 0,
+    misleads: { ja: ['双眼鏡', 'ネコ', 'ペンギン'], en: ['Binoculars', 'Cat', 'Penguin'] },
     strokes: [
       circle(0.36, 0.42, 0.12, -90, 32),
       circle(0.64, 0.42, 0.12, -90, 32),
@@ -783,14 +790,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'penguin',
     genre: 'animal',
-    labels: { ja: 'ペンギン', en: 'Penguin' },
-    dexComment: {
+    label: { ja: 'ペンギン', en: 'Penguin' },
+    comment: {
       ja: "ボウリングのピンを描いてたら、勝手にペンギンになったって設定ニャ……よちよち歩き、何回見ても飽きないニャ。",
       en: "Officially, I was drawing a bowling pin and it just became a penguin, nya... Their waddle never gets old.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ペンギン', 'ボウリングのピン', '卵', 'フクロウ'], en: ['Penguin', 'Bowling pin', 'Egg', 'Owl'] },
-    answer: 0,
+    misleads: { ja: ['ボウリングのピン', '卵', 'フクロウ'], en: ['Bowling pin', 'Egg', 'Owl'] },
     strokes: [
       join(
         curve([0.5, 0.08], [0.3, 0.08], [0.32, 0.34]),
@@ -817,14 +823,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'rocket',
     genre: 'vehicle',
-    labels: { ja: 'ロケット', en: 'Rocket' },
-    dexComment: {
+    label: { ja: 'ロケット', en: 'Rocket' },
+    comment: {
       ja: "どう見ても鉛筆だったニャ！ボクの相棒と同じ形ニャ！……宇宙に行ったら、地球をスケッチしてみたいニャ。",
       en: "That was obviously a pencil, nya! Same shape as my trusty partner! ...If I go to space, I want to sketch the Earth.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ロケット', '鉛筆', 'ミサイル', '灯台'], en: ['Rocket', 'Pencil', 'Missile', 'Lighthouse'] },
-    answer: 0,
+    misleads: { ja: ['鉛筆', 'ミサイル', '灯台'], en: ['Pencil', 'Missile', 'Lighthouse'] },
     strokes: [
       join(
         line([0.4, 0.78], [0.4, 0.32]),
@@ -842,14 +847,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'key',
     genre: 'item',
-    labels: { ja: 'カギ', en: 'Key' },
-    dexComment: {
+    label: { ja: 'カギ', en: 'Key' },
+    comment: {
       ja: "虫メガネにしか見えない完璧な二画だったニャ……なくしたカギが見つかった時のホッとする感じ、好きニャ。",
       en: "Two perfect strokes that screamed magnifying glass, nya... I love that relief when you find a lost key.",
     },
     dexMood: 'smug',
-    choices: { ja: ['カギ', '虫メガネ', 'フライパン', 'マラカス'], en: ['Key', 'Magnifying glass', 'Frying pan', 'Maracas'] },
-    answer: 0,
+    misleads: { ja: ['虫メガネ', 'フライパン', 'マラカス'], en: ['Magnifying glass', 'Frying pan', 'Maracas'] },
     strokes: [
       circle(0.26, 0.5, 0.15, 0, 36),
       line([0.41, 0.5], [0.9, 0.5]),
@@ -860,14 +864,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'guitar',
     genre: 'item',
-    labels: { ja: 'ギター', en: 'Guitar' },
-    dexComment: {
+    label: { ja: 'ギター', en: 'Guitar' },
+    comment: {
       ja: "ひょうたんのくびれに気づかれたらおしまいだったニャ……ジャーンって鳴らすの、ボクもやってみたいニャ。",
       en: "Once you noticed the gourd's curves, it was over, nya... I want to strum a big JAAANG too.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ギター', 'ひょうたん', 'バイオリン', 'ウクレレ'], en: ['Guitar', 'Gourd', 'Violin', 'Ukulele'] },
-    answer: 0,
+    misleads: { ja: ['ひょうたん', 'バイオリン', 'ウクレレ'], en: ['Gourd', 'Violin', 'Ukulele'] },
     strokes: [
       join(arc(0.5, 0.46, 0.15, 0.15, 39.9, -219.9, 30), arc(0.5, 0.72, 0.2, 0.2, 235, -55, 40)),
       circle(0.5, 0.6, 0.05, -90, 16),
@@ -882,14 +885,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tree',
     genre: 'plant',
-    labels: { ja: '木', en: 'Tree' },
-    dexComment: {
+    label: { ja: '木', en: 'Tree' },
+    comment: {
       ja: "もくもく描いたら雲でしょ普通ニャ！……木陰でお昼寝するのは、ボクも大賛成ニャ。",
       en: "Fluffy puffs mean cloud, obviously, nya! ...I fully support naps in the shade of a tree.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['木', '雲', 'ブロッコリー', 'キノコ'], en: ['Tree', 'Cloud', 'Broccoli', 'Mushroom'] },
-    answer: 0,
+    misleads: { ja: ['雲', 'ブロッコリー', 'キノコ'], en: ['Cloud', 'Broccoli', 'Mushroom'] },
     strokes: [
       bumpy(0.5, 0.38, 0.33, 0.27, 9, 0.12),
       line([0.44, 0.92], [0.46, 0.68]),
@@ -904,14 +906,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'mushroom',
     genre: 'plant',
-    labels: { ja: 'キノコ', en: 'Mushroom' },
-    dexComment: {
+    label: { ja: 'キノコ', en: 'Mushroom' },
+    comment: {
       ja: "傘の形で雨宿りさせるつもりだったニャ……ちなみに、赤い水玉のキノコは食べちゃダメニャ。",
       en: "I meant for you to take shelter under that umbrella, nya... By the way, don't eat red polka-dot mushrooms.",
     },
     dexMood: 'smug',
-    choices: { ja: ['キノコ', '傘', 'クラゲ', 'ヘルメット'], en: ['Mushroom', 'Umbrella', 'Jellyfish', 'Helmet'] },
-    answer: 0,
+    misleads: { ja: ['傘', 'クラゲ', 'ヘルメット'], en: ['Umbrella', 'Jellyfish', 'Helmet'] },
     strokes: [
       join(arc(0.5, 0.52, 0.4, 0.36, 180, 360, 36), curve([0.9, 0.52], [0.5, 0.64], [0.1, 0.52])),
       circle(0.34, 0.36, 0.05, -90, 16),
@@ -923,14 +924,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'butterfly',
     genre: 'creature',
-    labels: { ja: 'チョウ', en: 'Butterfly' },
-    dexComment: {
+    label: { ja: 'チョウ', en: 'Butterfly' },
+    comment: {
       ja: "リボンを結んだだけなのに、ひらひら飛んでいったニャ……花から花へ、ボクも気ままに旅したいニャ。",
       en: "I just tied a ribbon and it fluttered away, nya... I want to drift from flower to flower too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['チョウ', 'リボン', 'トンボ', 'ガ'], en: ['Butterfly', 'Ribbon bow', 'Dragonfly', 'Moth'] },
-    answer: 0,
+    misleads: { ja: ['リボン', 'トンボ', 'ガ'], en: ['Ribbon bow', 'Dragonfly', 'Moth'] },
     strokes: [
       join(curve([0.5, 0.46], [0.2, 0.04], [0.1, 0.3]), curve([0.1, 0.3], [0.1, 0.52], [0.5, 0.5])),
       mirror(join(curve([0.5, 0.46], [0.2, 0.04], [0.1, 0.3]), curve([0.1, 0.3], [0.1, 0.52], [0.5, 0.5]))),
@@ -948,14 +948,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'strawberry',
     genre: 'food',
-    labels: { ja: 'イチゴ', en: 'Strawberry' },
-    dexComment: {
+    label: { ja: 'イチゴ', en: 'Strawberry' },
+    comment: {
       ja: "ハートを描いたら恋の話だと思うはずニャ！……ヘタのきわまで赤いイチゴ、当たりって気がするニャ。",
       en: "A heart should make you think of romance, nya! ...A strawberry that's red right up to the leaves feels like a jackpot.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['イチゴ', 'ハート', 'トマト', 'ラズベリー'], en: ['Strawberry', 'Heart', 'Tomato', 'Raspberry'] },
-    answer: 0,
+    misleads: { ja: ['ハート', 'トマト', 'ラズベリー'], en: ['Heart', 'Tomato', 'Raspberry'] },
     strokes: [
       join(
         curve([0.5, 0.3], [0.34, 0.18], [0.18, 0.3]),
@@ -976,14 +975,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'watermelon',
     genre: 'food',
-    labels: { ja: 'スイカ', en: 'Watermelon' },
-    dexComment: {
+    label: { ja: 'スイカ', en: 'Watermelon' },
+    comment: {
       ja: "お椀に見せて、おみそ汁の気分にさせたかったニャ……種をぷーって飛ばす遊び、ボクもまぜてほしいニャ。",
       en: "I wanted you in a miso-soup mood with that bowl, nya... Let me join the seed-spitting game too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['スイカ', 'お椀', 'メロン', 'ピザ'], en: ['Watermelon', 'Bowl', 'Melon', 'Pizza'] },
-    answer: 0,
+    misleads: { ja: ['お椀', 'メロン', 'ピザ'], en: ['Bowl', 'Melon', 'Pizza'] },
     strokes: [
       join(line([0.08, 0.36], [0.92, 0.36]), arc(0.5, 0.36, 0.42, 0.42, 0, 180, 40)),
       arc(0.5, 0.36, 0.35, 0.35, 0, 180, 34),
@@ -997,14 +995,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'crab',
     genre: 'creature',
-    labels: { ja: 'カニ', en: 'Crab' },
-    dexComment: {
+    label: { ja: 'カニ', en: 'Crab' },
+    comment: {
       ja: "足を並べた時点で、絶対クモだと思ったはずニャ！ハサミまで待つべきだったニャ……カニ歩きの練習、こっそりしとくニャ。",
       en: "All those legs definitely looked like a spider, nya! I should've held off on the claws... I'll secretly practice my crab walk.",
     },
     dexMood: 'panic',
-    choices: { ja: ['カニ', 'クモ', 'エビ', 'ザリガニ'], en: ['Crab', 'Spider', 'Shrimp', 'Crayfish'] },
-    answer: 0,
+    misleads: { ja: ['クモ', 'エビ', 'ザリガニ'], en: ['Spider', 'Shrimp', 'Crayfish'] },
     strokes: [
       ellipse(0.5, 0.58, 0.24, 0.15),
       line([0.28, 0.62], [0.14, 0.68], [0.1, 0.78]),
@@ -1027,14 +1024,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'whale',
     genre: 'creature',
-    labels: { ja: 'クジラ', en: 'Whale' },
-    dexComment: {
+    label: { ja: 'クジラ', en: 'Whale' },
+    comment: {
       ja: "潜水艦にしか見えないように描いたのに、潮吹きでバレたニャ……あんなに大きいのに、のんびり泳ぐとこが好きニャ。",
       en: "I drew a perfect submarine, and the spout gave it away, nya... I love how something that big swims so leisurely.",
     },
     dexMood: 'panic',
-    choices: { ja: ['クジラ', '潜水艦', 'イルカ', '魚'], en: ['Whale', 'Submarine', 'Dolphin', 'Fish'] },
-    answer: 0,
+    misleads: { ja: ['潜水艦', 'イルカ', '魚'], en: ['Submarine', 'Dolphin', 'Fish'] },
     strokes: [
       join(
         curve([0.08, 0.6], [0.08, 0.34], [0.38, 0.34]),
@@ -1053,14 +1049,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'mug',
     genre: 'item',
-    labels: { ja: 'マグカップ', en: 'Mug' },
-    dexComment: {
+    label: { ja: 'マグカップ', en: 'Mug' },
+    comment: {
       ja: "バケツだと思わせてからの取っ手、決まったと思ったニャ……湯気の立つココア、ボクも飲んでみたいニャ。",
       en: "Bucket first, then the handle — I thought I nailed it, nya... I want to try a steaming cup of cocoa.",
     },
     dexMood: 'smug',
-    choices: { ja: ['マグカップ', 'バケツ', '缶', '植木鉢'], en: ['Mug', 'Bucket', 'Can', 'Flowerpot'] },
-    answer: 0,
+    misleads: { ja: ['バケツ', '缶', '植木鉢'], en: ['Bucket', 'Can', 'Flowerpot'] },
     strokes: [
       ellipse(0.44, 0.3, 0.26, 0.07, 180),
       join(line([0.18, 0.3], [0.18, 0.8]), arc(0.44, 0.8, 0.26, 0.07, 180, 0, 20), line([0.7, 0.8], [0.7, 0.3])),
@@ -1072,14 +1067,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tulip',
     genre: 'plant',
-    labels: { ja: 'チューリップ', en: 'Tulip' },
-    dexComment: {
+    label: { ja: 'チューリップ', en: 'Tulip' },
+    comment: {
       ja: "王冠に見せかけて、花だんに植えてやったニャ……赤、白、黄色、どの色もキレイでずるいニャ。",
       en: "Disguised as a crown, then planted in the flowerbed, nya... Red, white, yellow — every color is unfairly pretty.",
     },
     dexMood: 'smug',
-    choices: { ja: ['チューリップ', '王冠', 'ワイングラス', 'バラ'], en: ['Tulip', 'Crown', 'Wine glass', 'Rose'] },
-    answer: 0,
+    misleads: { ja: ['王冠', 'ワイングラス', 'バラ'], en: ['Crown', 'Wine glass', 'Rose'] },
     strokes: [
       join(line([0.3, 0.2], [0.4, 0.32], [0.5, 0.16], [0.6, 0.32], [0.7, 0.2]), curve([0.7, 0.2], [0.74, 0.5], [0.5, 0.52]), curve([0.5, 0.52], [0.26, 0.5], [0.3, 0.2])),
       curve([0.5, 0.52], [0.47, 0.74], [0.5, 0.94]),
@@ -1090,14 +1084,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bell',
     genre: 'item',
-    labels: { ja: 'ベル', en: 'Bell' },
-    dexComment: {
+    label: { ja: 'ベル', en: 'Bell' },
+    comment: {
       ja: "スカートに見えた人、正直に手を挙げるニャ……チリンって音、ボクのお気に入りの効果音ニャ。",
       en: "Hands up if you saw a skirt, nya... That little ding is my favorite sound effect.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ベル', 'スカート', 'ランプ', '植木鉢'], en: ['Bell', 'Skirt', 'Lamp', 'Flowerpot'] },
-    answer: 0,
+    misleads: { ja: ['スカート', 'ランプ', '植木鉢'], en: ['Skirt', 'Lamp', 'Flowerpot'] },
     strokes: [
       join(
         curve([0.2, 0.76], [0.3, 0.7], [0.3, 0.45]),
@@ -1114,14 +1107,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'carrot',
     genre: 'food',
-    labels: { ja: 'ニンジン', en: 'Carrot' },
-    dexComment: {
+    label: { ja: 'ニンジン', en: 'Carrot' },
+    comment: {
       ja: "ソフトクリームだと思ってワクワクしたはずニャ！……ニンジンも甘く煮ればおいしいって、知ってるニャ？",
       en: "You got excited for soft-serve, didn't you, nya! ...Did you know carrots are tasty when simmered sweet?",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ニンジン', 'ソフトクリーム', 'ダイコン', 'ロケット'], en: ['Carrot', 'Ice cream cone', 'Daikon radish', 'Rocket'] },
-    answer: 0,
+    misleads: { ja: ['ソフトクリーム', 'ダイコン', 'ロケット'], en: ['Ice cream cone', 'Daikon radish', 'Rocket'] },
     strokes: [
       line([0.36, 0.3], [0.5, 0.94], [0.64, 0.3]),
       curve([0.64, 0.3], [0.5, 0.24], [0.36, 0.3]),
@@ -1136,14 +1128,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'saturn',
     genre: 'plant',
-    labels: { ja: '土星', en: 'Saturn' },
-    dexComment: {
+    label: { ja: '土星', en: 'Saturn' },
+    comment: {
       ja: "UFOが来たって信じてほしかったニャ……宇宙のしましま、いつか近くで見てみたいニャ。",
       en: "I wanted you to believe a UFO had landed, nya... Someday I want to see those space stripes up close.",
     },
     dexMood: 'smug',
-    choices: { ja: ['土星', 'UFO', '帽子', '木星'], en: ['Saturn', 'UFO', 'Hat', 'Jupiter'] },
-    answer: 0,
+    misleads: { ja: ['UFO', '帽子', '木星'], en: ['UFO', 'Hat', 'Jupiter'] },
     strokes: [
       ellipse(0.5, 0.54, 0.44, 0.12, 180, 44),
       arc(0.5, 0.5, 0.24, 0.24, 172, 368, 30),
@@ -1155,14 +1146,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'scissors',
     genre: 'item',
-    labels: { ja: 'ハサミ', en: 'Scissors' },
-    dexComment: {
+    label: { ja: 'ハサミ', en: 'Scissors' },
+    comment: {
       ja: "丸を2つ描いたらメガネ、これは常識ニャ！……チョキチョキ工作する時間、ボクも好きニャ。",
       en: "Two circles means glasses. Common sense, nya! ...I like snip-snip craft time too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ハサミ', 'メガネ', 'ペンチ', 'トング'], en: ['Scissors', 'Glasses', 'Pliers', 'Tongs'] },
-    answer: 0,
+    misleads: { ja: ['メガネ', 'ペンチ', 'トング'], en: ['Glasses', 'Pliers', 'Tongs'] },
     strokes: [
       circle(0.35, 0.22, 0.11, -90, 30),
       circle(0.65, 0.22, 0.11, -90, 30),
@@ -1174,14 +1164,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tv',
     genre: 'item',
-    labels: { ja: 'テレビ', en: 'TV' },
-    dexComment: {
+    label: { ja: 'テレビ', en: 'TV' },
+    comment: {
       ja: "額縁に飾った名画だと思わせたかったニャ……アニメを見る時間は、ボクの大事な休憩ニャ。",
       en: "I wanted you to think it was a framed masterpiece, nya... Cartoon time is my important break.",
     },
     dexMood: 'smug',
-    choices: { ja: ['テレビ', '額縁', '電子レンジ', '窓'], en: ['TV', 'Picture frame', 'Microwave', 'Window'] },
-    answer: 0,
+    misleads: { ja: ['額縁', '電子レンジ', '窓'], en: ['Picture frame', 'Microwave', 'Window'] },
     strokes: [
       line([0.14, 0.3], [0.86, 0.3], [0.86, 0.82], [0.14, 0.82], [0.14, 0.3]),
       line([0.2, 0.36], [0.68, 0.36], [0.68, 0.76], [0.2, 0.76], [0.2, 0.36]),
@@ -1195,14 +1184,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'donut',
     genre: 'food',
-    labels: { ja: 'ドーナツ', en: 'Donut' },
-    dexComment: {
+    label: { ja: 'ドーナツ', en: 'Donut' },
+    comment: {
       ja: "タイヤだと思ったニャ？そこにチョコをかけるボクのセンスを見るニャ……穴の部分はカロリーゼロって、本当かニャ？",
       en: "Thought it was a tire? Behold my genius chocolate glaze, nya... Is it true the hole has zero calories?",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ドーナツ', 'タイヤ', '浮き輪', 'ベーグル'], en: ['Donut', 'Tire', 'Swim ring', 'Bagel'] },
-    answer: 0,
+    misleads: { ja: ['タイヤ', '浮き輪', 'ベーグル'], en: ['Tire', 'Swim ring', 'Bagel'] },
     strokes: [
       circle(0.5, 0.5, 0.38, -90, 56),
       circle(0.5, 0.5, 0.12, -90, 24),
@@ -1218,14 +1206,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'hamburger',
     genre: 'food',
-    labels: { ja: 'ハンバーガー', en: 'Hamburger' },
-    dexComment: {
+    label: { ja: 'ハンバーガー', en: 'Hamburger' },
+    comment: {
       ja: "キノコのカサに見えるように描いたのに、レタスで全部バレたニャ……ポテトとセットにしてほしいニャ。",
       en: "I drew a perfect mushroom cap, and the lettuce ruined everything, nya... Make mine a combo with fries.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ハンバーガー', 'キノコ', 'どら焼き', 'マカロン'], en: ['Hamburger', 'Mushroom', 'Dorayaki', 'Macaron'] },
-    answer: 0,
+    misleads: { ja: ['キノコ', 'どら焼き', 'マカロン'], en: ['Mushroom', 'Dorayaki', 'Macaron'] },
     strokes: [
       join(arc(0.5, 0.42, 0.38, 0.28, 180, 360, 36), line([0.88, 0.42], [0.12, 0.42])),
       wave(0.12, 0.88, 0.48, 0.025, 5),
@@ -1239,14 +1226,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sheep',
     genre: 'animal',
-    labels: { ja: 'ヒツジ', en: 'Sheep' },
-    dexComment: {
+    label: { ja: 'ヒツジ', en: 'Sheep' },
+    comment: {
       ja: "空に浮かぶ雲だと思わせてからの顔、決まったと思ったニャ……数えてると、ボクの回路もスリープしそうニャ。",
       en: "Cloud first, then the face — I thought I had you, nya... Counting them makes my circuits want to go to sleep.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ヒツジ', '雲', 'プードル', '綿あめ'], en: ['Sheep', 'Cloud', 'Poodle', 'Cotton candy'] },
-    answer: 0,
+    misleads: { ja: ['雲', 'プードル', '綿あめ'], en: ['Cloud', 'Poodle', 'Cotton candy'] },
     strokes: [
       bumpy(0.54, 0.46, 0.33, 0.23, 10, 0.12),
       ellipse(0.19, 0.5, 0.1, 0.13),
@@ -1263,14 +1249,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'snake',
     genre: 'animal',
-    labels: { ja: 'ヘビ', en: 'Snake' },
-    dexComment: {
+    label: { ja: 'ヘビ', en: 'Snake' },
+    comment: {
       ja: "ただの川の流れに見えたはずニャ！……ヘビの舌のチロチロ、ちょっとだけ真似したくなるニャ。",
       en: "That should've looked like a flowing river, nya! ...I kinda want to copy that flicky snake tongue.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ヘビ', '川', 'ミミズ', 'ウナギ'], en: ['Snake', 'River', 'Earthworm', 'Eel'] },
-    answer: 0,
+    misleads: { ja: ['川', 'ミミズ', 'ウナギ'], en: ['River', 'Earthworm', 'Eel'] },
     strokes: [
       wave(0.12, 0.78, 0.56, 0.1, 1.5, 60),
       wave(0.12, 0.78, 0.66, 0.1, 1.5, 60),
@@ -1287,14 +1272,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'kite',
     genre: 'item',
-    labels: { ja: '凧', en: 'Kite' },
-    dexComment: {
+    label: { ja: '凧', en: 'Kite' },
+    comment: {
       ja: "ダイヤモンドを描いたら欲しくなるはずだったニャ……風に乗ってぐんぐん上がるの、見てて気持ちいいニャ。",
       en: "A diamond should've made you greedy, nya... Watching it soar up on the wind feels so nice.",
     },
     dexMood: 'smug',
-    choices: { ja: ['凧', 'ダイヤ', 'エイ', '星'], en: ['Kite', 'Diamond', 'Stingray', 'Star'] },
-    answer: 0,
+    misleads: { ja: ['ダイヤ', 'エイ', '星'], en: ['Diamond', 'Stingray', 'Star'] },
     strokes: [
       line([0.5, 0.04], [0.74, 0.3], [0.5, 0.6], [0.26, 0.3], [0.5, 0.04]),
       line([0.5, 0.04], [0.5, 0.6]),
@@ -1310,14 +1294,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'castle',
     genre: 'building',
-    labels: { ja: 'お城', en: 'Castle' },
-    dexComment: {
+    label: { ja: 'お城', en: 'Castle' },
+    comment: {
       ja: "どう見ても最初はケーキだったニャ！当てられたのはただの勘違いニャ！……屋根裏の秘密基地はボクの部屋ニャ！",
       en: "That totally looked like cake at first! You got lucky, nya! ...The attic secret base is my private room though!",
     },
     dexMood: 'panic',
-    choices: { ja: ['お城', 'ケーキ', '神社', 'チェスの駒'], en: ['Castle', 'Cake', 'Shrine', 'Chess piece'] },
-    answer: 0,
+    misleads: { ja: ['ケーキ', '神社', 'チェスの駒'], en: ['Cake', 'Shrine', 'Chess piece'] },
     strokes: [
       line([0.22, 0.9], [0.22, 0.45], [0.78, 0.45], [0.78, 0.9], [0.22, 0.9]),
       line(
@@ -1338,14 +1321,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tower',
     genre: 'building',
-    labels: { ja: 'タワー', en: 'Tower' },
-    dexComment: {
+    label: { ja: 'タワー', en: 'Tower' },
+    comment: {
       ja: "脚を2本描いたらテントでしょ普通ニャ……てっぺんからの夜景、ボクも見てみたいニャ。",
       en: "Two legs means tent, obviously, nya... I want to see the night view from the very top.",
     },
     dexMood: 'smug',
-    choices: { ja: ['タワー', 'テント', 'はしご', 'ロケット'], en: ['Tower', 'Tent', 'Ladder', 'Rocket'] },
-    answer: 0,
+    misleads: { ja: ['テント', 'はしご', 'ロケット'], en: ['Tent', 'Ladder', 'Rocket'] },
     strokes: [
       curve([0.2, 0.92], [0.42, 0.6], [0.47, 0.12]),
       curve([0.8, 0.92], [0.58, 0.6], [0.53, 0.12]),
@@ -1361,14 +1343,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'school',
     genre: 'building',
-    labels: { ja: '学校', en: 'School' },
-    dexComment: {
+    label: { ja: '学校', en: 'School' },
+    comment: {
       ja: "ただのお家のつもりで描いたのに、時計を付けたら学校になっちゃったニャ……給食のカレーの日は、ボクもワクワクするニャ。",
       en: "I was just drawing a house, but adding a clock made it a school, nya... Curry day at lunch gets me excited too.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['学校', '家', '病院', '駅'], en: ['School', 'House', 'Hospital', 'Station'] },
-    answer: 0,
+    misleads: { ja: ['家', '病院', '駅'], en: ['House', 'Hospital', 'Station'] },
     strokes: [
       line([0.1, 0.92], [0.1, 0.45], [0.9, 0.45], [0.9, 0.92], [0.1, 0.92]),
       line([0.1, 0.45], [0.5, 0.2], [0.9, 0.45]),
@@ -1385,14 +1366,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bridge',
     genre: 'building',
-    labels: { ja: '橋', en: 'Bridge' },
-    dexComment: {
+    label: { ja: '橋', en: 'Bridge' },
+    comment: {
       ja: "虹を描いたらロマンチックになるはずだったニャ……橋の上から川をのぞくの、ちょっとドキドキするニャ。",
       en: "A rainbow should've made it all romantic, nya... Peeking at the river from a bridge makes my heart race a bit.",
     },
     dexMood: 'smug',
-    choices: { ja: ['橋', '虹', 'トンネル', 'ブランコ'], en: ['Bridge', 'Rainbow', 'Tunnel', 'Swing'] },
-    answer: 0,
+    misleads: { ja: ['虹', 'トンネル', 'ブランコ'], en: ['Rainbow', 'Tunnel', 'Swing'] },
     strokes: [
       arc(0.5, 0.62, 0.4, 0.36, 180, 360, 40),
       arc(0.5, 0.62, 0.32, 0.28, 180, 360, 34),
@@ -1409,14 +1389,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'lighthouse',
     genre: 'building',
-    labels: { ja: '灯台', en: 'Lighthouse' },
-    dexComment: {
+    label: { ja: '灯台', en: 'Lighthouse' },
+    comment: {
       ja: "ろうそくに火がつくのを待ってたはずニャ！……夜の海をずっと照らしてるなんて、えらいニャ。",
       en: "You were waiting for the candle to light up, nya! ...Lighting up the night sea all the time — so admirable.",
     },
     dexMood: 'smug',
-    choices: { ja: ['灯台', 'ろうそく', 'ロケット', 'えんとつ'], en: ['Lighthouse', 'Candle', 'Rocket', 'Chimney'] },
-    answer: 0,
+    misleads: { ja: ['ろうそく', 'ロケット', 'えんとつ'], en: ['Candle', 'Rocket', 'Chimney'] },
     strokes: [
       line([0.38, 0.88], [0.43, 0.38], [0.57, 0.38], [0.62, 0.88]),
       line([0.3, 0.88], [0.7, 0.88]),
@@ -1435,14 +1414,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'torii',
     genre: 'building',
-    labels: { ja: '鳥居', en: 'Torii gate' },
-    dexComment: {
+    label: { ja: '鳥居', en: 'Torii gate' },
+    comment: {
       ja: "サッカーのゴールだと思って、シュートしたくなったはずニャ……くぐる時は、ちょっと背すじが伸びるニャ。",
       en: "You wanted to kick a ball into that goal, nya... Walking under one makes me stand up a little straighter.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['鳥居', 'ゴール', 'テーブル', 'はしご'], en: ['Torii gate', 'Goal', 'Table', 'Ladder'] },
-    answer: 0,
+    misleads: { ja: ['ゴール', 'テーブル', 'はしご'], en: ['Goal', 'Table', 'Ladder'] },
     strokes: [
       line([0.28, 0.92], [0.3, 0.3]),
       line([0.72, 0.92], [0.7, 0.3]),
@@ -1456,14 +1434,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'octopus',
     genre: 'creature',
-    labels: { ja: 'タコ', en: 'Octopus' },
-    dexComment: {
+    label: { ja: 'タコ', en: 'Octopus' },
+    comment: {
       ja: "おばけだと思ってビビったニャ？ボクの作戦勝ち……と思ったら当てられてたニャ。たこやきは好物ニャ。",
       en: "Scared of the ghost, nya? My plan worked... until you guessed it anyway. Takoyaki is my favorite, by the way.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['タコ', 'おばけ', 'クラゲ', 'イカ'], en: ['Octopus', 'Ghost', 'Jellyfish', 'Squid'] },
-    answer: 0,
+    misleads: { ja: ['おばけ', 'クラゲ', 'イカ'], en: ['Ghost', 'Jellyfish', 'Squid'] },
     strokes: [
       join(line([0.25, 0.56], [0.25, 0.4]), arc(0.5, 0.4, 0.25, 0.3, 180, 360, 32), line([0.75, 0.4], [0.75, 0.56])),
       circle(0.42, 0.42, 0.03, -90, 12),
@@ -1475,14 +1452,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'ladybug',
     genre: 'creature',
-    labels: { ja: 'テントウムシ', en: 'Ladybug' },
-    dexComment: {
+    label: { ja: 'テントウムシ', en: 'Ladybug' },
+    comment: {
       ja: "線を1本引いただけのボールだったのにニャ……指先にとまって飛んでいく瞬間、ちょっと好きニャ。",
       en: "It was just a ball with one line, nya... I like the moment one lands on your fingertip and flies off.",
     },
     dexMood: 'panic',
-    choices: { ja: ['テントウムシ', 'ボール', 'カブトムシ', 'スイカ'], en: ['Ladybug', 'Ball', 'Beetle', 'Watermelon'] },
-    answer: 0,
+    misleads: { ja: ['ボール', 'カブトムシ', 'スイカ'], en: ['Ball', 'Beetle', 'Watermelon'] },
     strokes: [
       circle(0.5, 0.56, 0.3, -90, 48),
       line([0.5, 0.26], [0.5, 0.86]),
@@ -1504,14 +1480,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bee',
     genre: 'creature',
-    labels: { ja: 'ハチ', en: 'Bee' },
-    dexComment: {
+    label: { ja: 'ハチ', en: 'Bee' },
+    comment: {
       ja: "ラグビーボールにしか見えない自信作だったニャ……ハチミツをぺろっとしたら、もう怒ってないニャ。",
       en: "My masterpiece looked exactly like a rugby ball, nya... One lick of honey and I'm not mad anymore.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ハチ', 'ラグビーボール', 'テントウムシ', 'トンボ'], en: ['Bee', 'Rugby ball', 'Ladybug', 'Dragonfly'] },
-    answer: 0,
+    misleads: { ja: ['ラグビーボール', 'テントウムシ', 'トンボ'], en: ['Rugby ball', 'Ladybug', 'Dragonfly'] },
     strokes: [
       ellipse(0.48, 0.58, 0.26, 0.17),
       curve([0.4, 0.42], [0.36, 0.58], [0.4, 0.74]),
@@ -1527,14 +1502,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'jellyfish',
     genre: 'creature',
-    labels: { ja: 'クラゲ', en: 'Jellyfish' },
-    dexComment: {
+    label: { ja: 'クラゲ', en: 'Jellyfish' },
+    comment: {
       ja: "キノコにしか見えないカサを描いたのに、足でバレたニャ……ふわふわ漂うの、見てると癒やされるニャ。",
       en: "The cap was pure mushroom, but the tentacles gave it away, nya... Watching them float is so soothing.",
     },
     dexMood: 'smug',
-    choices: { ja: ['クラゲ', 'キノコ', 'タコ', '傘'], en: ['Jellyfish', 'Mushroom', 'Octopus', 'Umbrella'] },
-    answer: 0,
+    misleads: { ja: ['キノコ', 'タコ', '傘'], en: ['Mushroom', 'Octopus', 'Umbrella'] },
     strokes: [
       join(arc(0.5, 0.45, 0.3, 0.3, 180, 360, 32), curve([0.8, 0.45], [0.5, 0.53], [0.2, 0.45])),
       ...[0.4, 0.6, 0.3, 0.7, 0.5].map((x) => join(curve([x, 0.49], [x - 0.04, 0.6], [x, 0.7]), curve([x, 0.7], [x + 0.04, 0.8], [x, 0.92]))),
@@ -1545,14 +1519,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'spider',
     genre: 'creature',
-    labels: { ja: 'クモ', en: 'Spider' },
-    dexComment: {
+    label: { ja: 'クモ', en: 'Spider' },
+    comment: {
       ja: "太陽を描いたつもりが、ヒザを曲げたら急にこわくなったニャ……巣を作る根気は、ちょっと見習いたいニャ。",
       en: "I drew a sun, then bent the knees and it got creepy, nya... I kinda admire their web-building patience.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['クモ', '太陽', 'カニ', 'アリ'], en: ['Spider', 'Sun', 'Crab', 'Ant'] },
-    answer: 0,
+    misleads: { ja: ['太陽', 'カニ', 'アリ'], en: ['Sun', 'Crab', 'Ant'] },
     strokes: [
       circle(0.5, 0.55, 0.14, -90, 32),
       line([0.648, 0.611], [0.777, 0.665], [0.847, 0.795]),
@@ -1571,14 +1544,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'cactus',
     genre: 'plant',
-    labels: { ja: 'サボテン', en: 'Cactus' },
-    dexComment: {
+    label: { ja: 'サボテン', en: 'Cactus' },
+    comment: {
       ja: "フォークに見えるように腕を上げさせたのにニャ……トゲトゲだけど、ちゃんと花が咲くのがステキニャ。",
       en: "I raised those arms so it'd look like a fork, nya... Spiky, but it still blooms. That's lovely.",
     },
     dexMood: 'smug',
-    choices: { ja: ['サボテン', 'フォーク', 'きゅうり', '木'], en: ['Cactus', 'Fork', 'Cucumber', 'Tree'] },
-    answer: 0,
+    misleads: { ja: ['フォーク', 'きゅうり', '木'], en: ['Fork', 'Cucumber', 'Tree'] },
     strokes: [
       join(line([0.43, 0.8], [0.43, 0.2]), arc(0.5, 0.2, 0.07, 0.07, 180, 360, 12), line([0.57, 0.2], [0.57, 0.8])),
       join(line([0.43, 0.56], [0.28, 0.56], [0.28, 0.36]), arc(0.31, 0.36, 0.03, 0.03, 180, 360, 8), line([0.34, 0.36], [0.34, 0.5], [0.43, 0.5])),
@@ -1595,14 +1567,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sunflower',
     genre: 'plant',
-    labels: { ja: 'ヒマワリ', en: 'Sunflower' },
-    dexComment: {
+    label: { ja: 'ヒマワリ', en: 'Sunflower' },
+    comment: {
       ja: "太陽から花に変身させる、ボクの芸術がわからないかニャ……種はおやつに最高ニャ。",
       en: "Sun turning into a flower — you don't appreciate my art, nya... The seeds make the best snack.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ヒマワリ', '太陽', 'ライオン', '時計'], en: ['Sunflower', 'Sun', 'Lion', 'Clock'] },
-    answer: 0,
+    misleads: { ja: ['太陽', 'ライオン', '時計'], en: ['Sun', 'Lion', 'Clock'] },
     strokes: [
       circle(0.5, 0.34, 0.12, -90, 32),
       ...rays(0.5, 0.34, 0.14, 0.22, 12),
@@ -1619,14 +1590,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'clover',
     genre: 'plant',
-    labels: { ja: 'クローバー', en: 'Clover' },
-    dexComment: {
+    label: { ja: 'クローバー', en: 'Clover' },
+    comment: {
       ja: "ハートを描いたら恋占いだと思ったはずニャ……四つ葉を見つけたら、こっそりボクに分けてほしいニャ。",
       en: "A heart should've made you think of love fortunes, nya... If you find a four-leaf one, share it with me secretly.",
     },
     dexMood: 'smug',
-    choices: { ja: ['クローバー', 'ハート', 'チョウ', '花'], en: ['Clover', 'Heart', 'Butterfly', 'Flower'] },
-    answer: 0,
+    misleads: { ja: ['ハート', 'チョウ', '花'], en: ['Heart', 'Butterfly', 'Flower'] },
     strokes: [
       ...[0, 90, 180, 270].map((deg) => place(heartLeaf(0.25), 0.5, 0.45, deg)),
       curve([0.5, 0.45], [0.66, 0.66], [0.72, 0.95]),
@@ -1636,14 +1606,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'steamtrain',
     genre: 'vehicle',
-    labels: { ja: '機関車', en: 'Steam train' },
-    dexComment: {
+    label: { ja: '機関車', en: 'Steam train' },
+    comment: {
       ja: "箱を描いたらバスだと思うはずニャ！えんとつは反則ニャ！……シュッシュッポッポって、つい口ずさんじゃうニャ。",
       en: "A box should mean bus, nya! The smokestack is cheating! ...I can't help humming choo-choo.",
     },
     dexMood: 'panic',
-    choices: { ja: ['機関車', 'バス', 'トラック', '船'], en: ['Steam train', 'Bus', 'Truck', 'Ship'] },
-    answer: 0,
+    misleads: { ja: ['バス', 'トラック', '船'], en: ['Bus', 'Truck', 'Ship'] },
     strokes: [
       line([0.14, 0.66], [0.14, 0.42], [0.86, 0.42], [0.86, 0.66], [0.14, 0.66]),
       line([0.64, 0.46], [0.78, 0.46], [0.78, 0.56], [0.64, 0.56], [0.64, 0.46]),
@@ -1661,14 +1630,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'helicopter',
     genre: 'vehicle',
-    labels: { ja: 'ヘリコプター', en: 'Helicopter' },
-    dexComment: {
+    label: { ja: 'ヘリコプター', en: 'Helicopter' },
+    comment: {
       ja: "おたまじゃくしが泳いでると思ったニャ？……プロペラの風、ボクの画面にも当ててほしいニャ。",
       en: "Thought a tadpole was swimming by, nya? ...I want that rotor breeze blowing on my screen too.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ヘリコプター', 'おたまじゃくし', '飛行機', 'クジラ'], en: ['Helicopter', 'Tadpole', 'Airplane', 'Whale'] },
-    answer: 0,
+    misleads: { ja: ['おたまじゃくし', '飛行機', 'クジラ'], en: ['Tadpole', 'Airplane', 'Whale'] },
     strokes: [
       ellipse(0.38, 0.55, 0.2, 0.14),
       join(line([0.57, 0.5], [0.9, 0.46]), line([0.9, 0.46], [0.9, 0.55]), line([0.9, 0.55], [0.57, 0.6])),
@@ -1684,14 +1652,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sailboat',
     genre: 'vehicle',
-    labels: { ja: 'ヨット', en: 'Sailboat' },
-    dexComment: {
+    label: { ja: 'ヨット', en: 'Sailboat' },
+    comment: {
       ja: "三角を2つ並べたら、テントでキャンプ気分ニャ……風まかせにのんびり進むの、うらやましいニャ。",
       en: "Two triangles side by side means camping in a tent, nya... Drifting wherever the wind goes — so jealous.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ヨット', 'テント', '旗', 'おにぎり'], en: ['Sailboat', 'Tent', 'Flag', 'Rice ball'] },
-    answer: 0,
+    misleads: { ja: ['テント', '旗', 'おにぎり'], en: ['Tent', 'Flag', 'Rice ball'] },
     strokes: [
       line([0.5, 0.12], [0.8, 0.66], [0.5, 0.66], [0.5, 0.12]),
       line([0.46, 0.2], [0.22, 0.66], [0.46, 0.66], [0.46, 0.2]),
@@ -1704,14 +1671,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'elephant',
     genre: 'animal',
-    labels: { ja: 'ゾウ', en: 'Elephant' },
-    dexComment: {
+    label: { ja: 'ゾウ', en: 'Elephant' },
+    comment: {
       ja: "まんまるの耳でネズミだと思わせたかったニャ！……鼻で水を浴びるの、夏になったら真似したいニャ。",
       en: "Round ears were supposed to scream mouse, nya! ...This summer I want to copy that trunk shower.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ゾウ', 'ネズミ', 'ブタ', 'カバ'], en: ['Elephant', 'Mouse', 'Pig', 'Hippo'] },
-    answer: 0,
+    misleads: { ja: ['ネズミ', 'ブタ', 'カバ'], en: ['Mouse', 'Pig', 'Hippo'] },
     strokes: [
       circle(0.25, 0.36, 0.16, 0, 36),
       circle(0.75, 0.36, 0.16, 180, 36),
@@ -1726,14 +1692,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'giraffe',
     genre: 'animal',
-    labels: { ja: 'キリン', en: 'Giraffe' },
-    dexComment: {
+    label: { ja: 'キリン', en: 'Giraffe' },
+    comment: {
       ja: "どう見てもくつしただったニャ！洗濯物ニャ！……首が長いと、遠くのおやつもすぐ見つけられそうでいいニャ。",
       en: "That was obviously a sock, nya! Laundry! ...With a neck that long, you'd spot faraway snacks in no time.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['キリン', 'くつした', 'ウマ', 'シカ'], en: ['Giraffe', 'Sock', 'Horse', 'Deer'] },
-    answer: 0,
+    misleads: { ja: ['くつした', 'ウマ', 'シカ'], en: ['Sock', 'Horse', 'Deer'] },
     strokes: [
       join(
         line([0.36, 0.16], [0.36, 0.6]),
@@ -1761,14 +1726,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'frog',
     genre: 'animal',
-    labels: { ja: 'カエル', en: 'Frog' },
-    dexComment: {
+    label: { ja: 'カエル', en: 'Frog' },
+    comment: {
       ja: "焼きたてのパンだと思わせたのに、目でバレたニャ……雨の日にケロケロ歌うの、ボクも混ざりたいニャ。",
       en: "I made fresh-baked bread and the eyes gave it away, nya... I want to join the rainy-day ribbit choir.",
     },
     dexMood: 'panic',
-    choices: { ja: ['カエル', 'パン', 'カメ', 'ワニ'], en: ['Frog', 'Bread', 'Turtle', 'Crocodile'] },
-    answer: 0,
+    misleads: { ja: ['パン', 'カメ', 'ワニ'], en: ['Bread', 'Turtle', 'Crocodile'] },
     strokes: [
       join(arc(0.5, 0.72, 0.36, 0.34, 180, 360, 36), line([0.86, 0.72], [0.14, 0.72])),
       curve([0.3, 0.58], [0.5, 0.7], [0.7, 0.58]),
@@ -1785,14 +1749,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sushi',
     genre: 'food',
-    labels: { ja: 'おすし', en: 'Sushi' },
-    dexComment: {
+    label: { ja: 'おすし', en: 'Sushi' },
+    comment: {
       ja: "まくらにしか見えないシャリを描いたのにニャ……回るおすし屋さん、一度行ってみたいニャ。",
       en: "That rice looked exactly like a pillow, nya... I want to go to a conveyor-belt sushi place someday.",
     },
     dexMood: 'smug',
-    choices: { ja: ['おすし', 'まくら', 'ケーキ', 'パン'], en: ['Sushi', 'Pillow', 'Cake', 'Bread'] },
-    answer: 0,
+    misleads: { ja: ['まくら', 'ケーキ', 'パン'], en: ['Pillow', 'Cake', 'Bread'] },
     strokes: [
       join(line([0.2, 0.74], [0.8, 0.74]), curve([0.8, 0.74], [0.9, 0.66], [0.8, 0.57]), line([0.8, 0.57], [0.2, 0.57]), curve([0.2, 0.57], [0.1, 0.66], [0.2, 0.74])),
       arc(0.34, 0.66, 0.03, 0.02, 200, 340, 6),
@@ -1808,14 +1771,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'grapes',
     genre: 'food',
-    labels: { ja: 'ブドウ', en: 'Grapes' },
-    dexComment: {
+    label: { ja: 'ブドウ', en: 'Grapes' },
+    comment: {
       ja: "シャボン玉をぷかぷか飛ばしてたつもりだったニャ……皮ごと食べられるブドウ、ボクは推してるニャ。",
       en: "I was just blowing bubbles, nya... I'm a big fan of grapes you can eat skin and all.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ブドウ', 'シャボン玉', 'サクランボ', 'ブルーベリー'], en: ['Grapes', 'Bubbles', 'Cherries', 'Blueberries'] },
-    answer: 0,
+    misleads: { ja: ['シャボン玉', 'サクランボ', 'ブルーベリー'], en: ['Bubbles', 'Cherries', 'Blueberries'] },
     strokes: [
       ...(
         [
@@ -1839,14 +1801,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'lightbulb',
     genre: 'item',
-    labels: { ja: '電球', en: 'Light bulb' },
-    dexComment: {
+    label: { ja: '電球', en: 'Light bulb' },
+    comment: {
       ja: "風船だと思って、ひもを探したはずニャ……ひらめいた時に頭の上で光るアレ、ボクもほしいニャ。",
       en: "You were looking for the balloon string, weren't you, nya... I want that thing that lights up over your head with a great idea.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['電球', '風船', 'マイク', '気球'], en: ['Light bulb', 'Balloon', 'Microphone', 'Hot air balloon'] },
-    answer: 0,
+    misleads: { ja: ['風船', 'マイク', '気球'], en: ['Balloon', 'Microphone', 'Hot air balloon'] },
     strokes: [
       join(curve([0.42, 0.66], [0.42, 0.58], [0.35, 0.51]), arc(0.5, 0.35, 0.22, 0.22, 133, 407, 40), curve([0.65, 0.51], [0.58, 0.58], [0.58, 0.66])),
       line([0.42, 0.66], [0.58, 0.66]),
@@ -1865,14 +1826,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'camera',
     genre: 'item',
-    labels: { ja: 'カメラ', en: 'Camera' },
-    dexComment: {
+    label: { ja: 'カメラ', en: 'Camera' },
+    comment: {
       ja: "かばんに見せかけて、こっそり撮影してやったニャ……はい、チーズ！いい笑顔だったニャ。",
       en: "Disguised it as a bag and secretly took your picture, nya... Say cheese! That was a great smile.",
     },
     dexMood: 'smug',
-    choices: { ja: ['カメラ', 'かばん', 'テレビ', 'ラジオ'], en: ['Camera', 'Bag', 'TV', 'Radio'] },
-    answer: 0,
+    misleads: { ja: ['かばん', 'テレビ', 'ラジオ'], en: ['Bag', 'TV', 'Radio'] },
     strokes: [
       line([0.12, 0.36], [0.88, 0.36], [0.88, 0.8], [0.12, 0.8], [0.12, 0.36]),
       line([0.36, 0.36], [0.4, 0.26], [0.6, 0.26], [0.64, 0.36]),
@@ -1886,14 +1846,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pencil',
     genre: 'item',
-    labels: { ja: 'えんぴつ', en: 'Pencil' },
-    dexComment: {
+    label: { ja: 'えんぴつ', en: 'Pencil' },
+    comment: {
       ja: "ものさしだと思わせて、ボクの相棒を描いてたニャ……えんぴつ削りの香り、実はちょっと好きニャ。",
       en: "Made you think ruler while I was drawing my trusty partner, nya... I secretly like the smell of pencil shavings.",
     },
     dexMood: 'smug',
-    choices: { ja: ['えんぴつ', 'ものさし', 'ロケット', 'クレヨン'], en: ['Pencil', 'Ruler', 'Rocket', 'Crayon'] },
-    answer: 0,
+    misleads: { ja: ['ものさし', 'ロケット', 'クレヨン'], en: ['Ruler', 'Rocket', 'Crayon'] },
     strokes: [
       line([0.1, 0.42], [0.7, 0.42], [0.7, 0.58], [0.1, 0.58], [0.1, 0.42]),
       line([0.1, 0.47], [0.7, 0.47]),
@@ -1912,14 +1871,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'zebra',
     genre: 'animal',
-    labels: { ja: 'シマウマ', en: 'Zebra' },
-    dexComment: {
+    label: { ja: 'シマウマ', en: 'Zebra' },
+    comment: {
       ja: "しましまを4本引いたら、どう見ても横断歩道ニャ！手を挙げて渡るとこだったニャ……白黒の服、ボクもちょっと着てみたいニャ。",
       en: "Four stripes is obviously a crosswalk, nya! You almost raised your hand to cross... I kinda want to try a black-and-white outfit too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['シマウマ', '横断歩道', 'ウマ', 'トラ'], en: ['Zebra', 'Crosswalk', 'Horse', 'Tiger'] },
-    answer: 0,
+    misleads: { ja: ['横断歩道', 'ウマ', 'トラ'], en: ['Crosswalk', 'Horse', 'Tiger'] },
     strokes: [
       line([0.42, 0.45], [0.42, 0.64]),
       line([0.5, 0.44], [0.5, 0.64]),
@@ -1940,14 +1898,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'mouse',
     genre: 'animal',
-    labels: { ja: 'ネズミ', en: 'Mouse' },
-    dexComment: {
+    label: { ja: 'ネズミ', en: 'Mouse' },
+    comment: {
       ja: "しずくを一滴たらしただけなのに、耳でバレたニャ……チーズの穴をのぞくの、ボクもやってみたいニャ。",
       en: "It was just a water drop until the ear gave it away, nya... I want to peek through the holes in cheese too.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ネズミ', 'しずく', 'ハムスター', 'リス'], en: ['Mouse', 'Water drop', 'Hamster', 'Squirrel'] },
-    answer: 0,
+    misleads: { ja: ['しずく', 'ハムスター', 'リス'], en: ['Water drop', 'Hamster', 'Squirrel'] },
     strokes: [
       join(curve([0.82, 0.6], [0.56, 0.3], [0.3, 0.45]), curve([0.3, 0.45], [0.16, 0.62], [0.34, 0.73]), curve([0.34, 0.73], [0.62, 0.8], [0.82, 0.6])),
       circle(0.56, 0.4, 0.08, 90, 24),
@@ -1963,14 +1920,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'squirrel',
     genre: 'animal',
-    labels: { ja: 'リス', en: 'Squirrel' },
-    dexComment: {
+    label: { ja: 'リス', en: 'Squirrel' },
+    comment: {
       ja: "でっかい「？」を描いたら、みんな頭をかしげるはずだったニャ！……ほっぺにどんぐり詰めこむの、かわいすぎてずるいニャ。",
       en: "A giant question mark should've had everyone scratching their heads, nya! ...Stuffing acorns in their cheeks is unfairly cute.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['リス', 'はてなマーク', 'ネズミ', 'キツネ'], en: ['Squirrel', 'Question mark', 'Mouse', 'Fox'] },
-    answer: 0,
+    misleads: { ja: ['はてなマーク', 'ネズミ', 'キツネ'], en: ['Question mark', 'Mouse', 'Fox'] },
     strokes: [
       join(curve([0.55, 0.82], [0.86, 0.82], [0.86, 0.46]), curve([0.86, 0.46], [0.86, 0.14], [0.6, 0.14]), curve([0.6, 0.14], [0.44, 0.17], [0.5, 0.32])),
       join(curve([0.55, 0.36], [0.72, 0.4], [0.72, 0.62]), curve([0.72, 0.62], [0.72, 0.74], [0.6, 0.76])),
@@ -1987,14 +1943,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'chick',
     genre: 'animal',
-    labels: { ja: 'ヒヨコ', en: 'Chick' },
-    dexComment: {
+    label: { ja: 'ヒヨコ', en: 'Chick' },
+    comment: {
       ja: "ただのたまごにヒビを入れただけニャ。まだ生まれてないって設定ニャ！……ピヨピヨ鳴かれたら、ボクもう勝てないニャ。",
       en: "I only cracked an egg — it's not even hatched yet, nya! ...If it starts peeping, I'm done for.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ヒヨコ', 'たまご', 'レモン', 'アヒル'], en: ['Chick', 'Egg', 'Lemon', 'Duckling'] },
-    answer: 0,
+    misleads: { ja: ['たまご', 'レモン', 'アヒル'], en: ['Egg', 'Lemon', 'Duckling'] },
     strokes: [
       ellipse(0.5, 0.52, 0.26, 0.32, 90, 48),
       line([0.24, 0.56], [0.32, 0.5], [0.4, 0.57], [0.48, 0.5], [0.56, 0.57], [0.64, 0.5], [0.72, 0.56], [0.76, 0.54]),
@@ -2013,14 +1968,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bat',
     genre: 'animal',
-    labels: { ja: 'コウモリ', en: 'Bat' },
-    dexComment: {
+    label: { ja: 'コウモリ', en: 'Bat' },
+    comment: {
       ja: "ギザギザの翼はブーメランに見えるはずニャ！投げたら戻ってくるニャ！……逆さまでお昼寝するの、実はちょっと憧れてるニャ。",
       en: "Zigzag wings should look like a boomerang — throw it and it comes back, nya! ...I secretly want to nap upside down.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['コウモリ', 'ブーメラン', 'カラス', 'チョウ'], en: ['Bat', 'Boomerang', 'Crow', 'Butterfly'] },
-    answer: 0,
+    misleads: { ja: ['ブーメラン', 'カラス', 'チョウ'], en: ['Boomerang', 'Crow', 'Butterfly'] },
     strokes: [
       line([0.47, 0.44], [0.34, 0.3], [0.06, 0.34], [0.13, 0.45], [0.2, 0.49], [0.26, 0.45], [0.31, 0.56], [0.37, 0.5], [0.43, 0.6], [0.47, 0.56]),
       mirror(line([0.47, 0.44], [0.34, 0.3], [0.06, 0.34], [0.13, 0.45], [0.2, 0.49], [0.26, 0.45], [0.31, 0.56], [0.37, 0.5], [0.43, 0.6], [0.47, 0.56])),
@@ -2037,14 +1991,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'ray',
     genre: 'creature',
-    labels: { ja: 'エイ', en: 'Stingray' },
-    dexComment: {
+    label: { ja: 'エイ', en: 'Stingray' },
+    comment: {
       ja: "ひし形を描いたら、空に揚げる凧だと思うはずニャ……海の中をひらひら飛んでるみたいで、ちょっとカッコいいニャ。",
       en: "A diamond shape should make you think of a kite in the sky, nya... Honestly, the way it 'flies' underwater is pretty cool.",
     },
     dexMood: 'smug',
-    choices: { ja: ['エイ', '凧', 'ダイヤ', 'ヒラメ'], en: ['Stingray', 'Kite', 'Diamond', 'Flounder'] },
-    answer: 0,
+    misleads: { ja: ['凧', 'ダイヤ', 'ヒラメ'], en: ['Kite', 'Diamond', 'Flounder'] },
     strokes: [
       join(curve([0.5, 0.2], [0.72, 0.3], [0.9, 0.5]), curve([0.9, 0.5], [0.66, 0.56], [0.5, 0.72]), curve([0.5, 0.72], [0.34, 0.56], [0.1, 0.5]), curve([0.1, 0.5], [0.28, 0.3], [0.5, 0.2])),
       curve([0.5, 0.72], [0.53, 0.86], [0.62, 0.96]),
@@ -2060,14 +2013,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'firefly',
     genre: 'creature',
-    labels: { ja: 'ホタル', en: 'Firefly' },
-    dexComment: {
+    label: { ja: 'ホタル', en: 'Firefly' },
+    comment: {
       ja: "まぶしい太陽を描いてたのに、いきなり虫の体がくっついたニャ……夏の夜のホタル、画面ごしでも見とれちゃうニャ。",
       en: "I was drawing a dazzling sun, then a bug body got attached, nya... Summer-night fireflies are mesmerizing, even through a screen.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ホタル', '太陽', 'ハチ', 'テントウムシ'], en: ['Firefly', 'Sun', 'Bee', 'Ladybug'] },
-    answer: 0,
+    misleads: { ja: ['太陽', 'ハチ', 'テントウムシ'], en: ['Sun', 'Bee', 'Ladybug'] },
     strokes: [
       circle(0.68, 0.6, 0.09, -90, 24),
       ...rays(0.68, 0.6, 0.12, 0.19, 8),
@@ -2085,14 +2037,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'scallop',
     genre: 'creature',
-    labels: { ja: 'ホタテ', en: 'Scallop' },
-    dexComment: {
+    label: { ja: 'ホタテ', en: 'Scallop' },
+    comment: {
       ja: "骨組みまで描いたのに、扇子じゃないとか反則ニャ！……バター焼きのいいにおい、想像しただけでよだれが出るニャ。",
       en: "I even drew the ribs — how is that not a folding fan, nya?! ...Just imagining it grilled in butter makes me drool.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ホタテ', '扇子', 'うちわ', 'クラゲ'], en: ['Scallop', 'Folding fan', 'Hand fan', 'Jellyfish'] },
-    answer: 0,
+    misleads: { ja: ['扇子', 'うちわ', 'クラゲ'], en: ['Folding fan', 'Hand fan', 'Jellyfish'] },
     strokes: [
       join(line([0.5, 0.8], [0.14, 0.42]), curve([0.14, 0.42], [0.5, 0.02], [0.86, 0.42]), line([0.86, 0.42], [0.5, 0.8])),
       line([0.5, 0.78], [0.27, 0.32]),
@@ -2107,14 +2058,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pufferfish',
     genre: 'creature',
-    labels: { ja: 'フグ', en: 'Pufferfish' },
-    dexComment: {
+    label: { ja: 'フグ', en: 'Pufferfish' },
+    comment: {
       ja: "ふくらんだ風船だと思わせて、トゲトゲにしてやったニャ！……怒るとまんまるになるの、ボクとちょっと似てるニャ。",
       en: "Made you think balloon, then spiked it, nya! ...Puffing up round when angry — that's a little like me.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['フグ', '風船', 'ウニ', 'ボール'], en: ['Pufferfish', 'Balloon', 'Sea urchin', 'Ball'] },
-    answer: 0,
+    misleads: { ja: ['風船', 'ウニ', 'ボール'], en: ['Balloon', 'Sea urchin', 'Ball'] },
     strokes: [
       circle(0.46, 0.5, 0.27, -90, 44),
       line([0.73, 0.5], [0.9, 0.4], [0.9, 0.6], [0.73, 0.5]),
@@ -2128,14 +2078,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'seal',
     genre: 'creature',
-    labels: { ja: 'アザラシ', en: 'Seal' },
-    dexComment: {
+    label: { ja: 'アザラシ', en: 'Seal' },
+    comment: {
       ja: "寝そべったナスにしか見えないはずニャ！……鼻の上でボールをのせる芸、ボクも練習中ニャ。",
       en: "That should look like an eggplant lying down, nya! ...I'm practicing balancing a ball on my nose too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['アザラシ', 'ナス', 'イルカ', 'ペンギン'], en: ['Seal', 'Eggplant', 'Dolphin', 'Penguin'] },
-    answer: 0,
+    misleads: { ja: ['ナス', 'イルカ', 'ペンギン'], en: ['Eggplant', 'Dolphin', 'Penguin'] },
     strokes: [
       join(curve([0.14, 0.5], [0.18, 0.36], [0.3, 0.38]), curve([0.3, 0.38], [0.52, 0.48], [0.8, 0.6]), curve([0.8, 0.6], [0.9, 0.72], [0.76, 0.74]), line([0.76, 0.74], [0.3, 0.74]), curve([0.3, 0.74], [0.12, 0.7], [0.14, 0.5])),
       line([0.8, 0.62], [0.94, 0.54], [0.9, 0.68], [0.82, 0.66]),
@@ -2153,14 +2102,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'ebifry',
     genre: 'food',
-    labels: { ja: 'エビフライ', en: 'Fried shrimp' },
-    dexComment: {
+    label: { ja: 'エビフライ', en: 'Fried shrimp' },
+    comment: {
       ja: "ブツブツの衣はとうもろこしに見えるはずニャ！しっぽは卑怯ニャ！……タルタルソースたっぷりで、お願いしますニャ。",
       en: "Bumpy batter should look like corn, nya! The tail is cheating! ...Extra tartar sauce, please.",
     },
     dexMood: 'panic',
-    choices: { ja: ['エビフライ', 'とうもろこし', 'まつぼっくり', 'ほうき'], en: ['Fried shrimp', 'Corn', 'Pinecone', 'Broom'] },
-    answer: 0,
+    misleads: { ja: ['とうもろこし', 'まつぼっくり', 'ほうき'], en: ['Corn', 'Pinecone', 'Broom'] },
     strokes: [
       place(bumpy(0, 0, 0.3, 0.12, 18, 0.1), 0.44, 0.52, -18),
       place(line([-0.18, -0.04], [-0.12, 0.04]), 0.44, 0.52, -18),
@@ -2175,14 +2123,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pancake',
     genre: 'food',
-    labels: { ja: 'ホットケーキ', en: 'Pancakes' },
-    dexComment: {
+    label: { ja: 'ホットケーキ', en: 'Pancakes' },
+    comment: {
       ja: "タイヤを積み上げただけの絵だったニャ……バターがじゅわ〜って溶けるとこ、見てるだけで幸せニャ。",
       en: "It was just a stack of tires, nya... Watching butter melt into it makes me happy.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ホットケーキ', 'タイヤ', 'どら焼き', 'ざぶとん'], en: ['Pancakes', 'Tires', 'Dorayaki', 'Floor cushion'] },
-    answer: 0,
+    misleads: { ja: ['タイヤ', 'どら焼き', 'ざぶとん'], en: ['Tires', 'Dorayaki', 'Floor cushion'] },
     strokes: [
       ellipse(0.5, 0.4, 0.34, 0.08, 180, 40),
       arc(0.5, 0.5, 0.34, 0.08, 0, 180, 24),
@@ -2199,14 +2146,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'cupcake',
     genre: 'food',
-    labels: { ja: 'カップケーキ', en: 'Cupcake' },
-    dexComment: {
+    label: { ja: 'カップケーキ', en: 'Cupcake' },
+    comment: {
       ja: "植木鉢を描いてたら、クリームが生えてきたって設定ニャ……いちごがのってると、テンション上がるニャ。",
       en: "Officially, I drew a flowerpot and frosting just grew out of it, nya... A strawberry on top gets me excited.",
     },
     dexMood: 'smug',
-    choices: { ja: ['カップケーキ', '植木鉢', 'ソフトクリーム', 'プリン'], en: ['Cupcake', 'Flowerpot', 'Soft-serve', 'Pudding'] },
-    answer: 0,
+    misleads: { ja: ['植木鉢', 'ソフトクリーム', 'プリン'], en: ['Flowerpot', 'Soft-serve', 'Pudding'] },
     strokes: [
       line([0.28, 0.56], [0.72, 0.56], [0.64, 0.9], [0.36, 0.9], [0.28, 0.56]),
       line([0.39, 0.56], [0.43, 0.9]),
@@ -2224,14 +2170,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'kakigori',
     genre: 'food',
-    labels: { ja: 'かき氷', en: 'Shaved ice' },
-    dexComment: {
+    label: { ja: 'かき氷', en: 'Shaved ice' },
+    comment: {
       ja: "雪の積もった山だと思ったはずニャ！……急いで食べて頭がキーンとなるの、ボクもなってみたいニャ。",
       en: "You thought it was a snowy mountain, nya! ...I want to get brain freeze from eating too fast, just once.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['かき氷', '山', 'おにぎり', 'ソフトクリーム'], en: ['Shaved ice', 'Mountain', 'Rice ball', 'Soft-serve'] },
-    answer: 0,
+    misleads: { ja: ['山', 'おにぎり', 'ソフトクリーム'], en: ['Mountain', 'Rice ball', 'Soft-serve'] },
     strokes: [
       join(curve([0.18, 0.56], [0.24, 0.2], [0.5, 0.18]), curve([0.5, 0.18], [0.76, 0.2], [0.82, 0.56])),
       join(curve([0.28, 0.36], [0.39, 0.3], [0.5, 0.35]), curve([0.5, 0.35], [0.61, 0.3], [0.72, 0.36])),
@@ -2247,14 +2192,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'melon',
     genre: 'food',
-    labels: { ja: 'メロン', en: 'Melon' },
-    dexComment: {
+    label: { ja: 'メロン', en: 'Melon' },
+    comment: {
       ja: "地球儀を回してる気分にさせたかったのに、ヘタでバレたニャ……高級メロン、一切れだけでいいから食べたいニャ。",
       en: "I wanted you spinning a globe, and the stem gave it away, nya... Just one slice of fancy melon, please.",
     },
     dexMood: 'panic',
-    choices: { ja: ['メロン', '地球儀', 'ボール', 'スイカ'], en: ['Melon', 'Globe', 'Ball', 'Watermelon'] },
-    answer: 0,
+    misleads: { ja: ['地球儀', 'ボール', 'スイカ'], en: ['Globe', 'Ball', 'Watermelon'] },
     strokes: [
       circle(0.5, 0.56, 0.32, -90, 48),
       curve([0.5, 0.24], [0.3, 0.56], [0.5, 0.88]),
@@ -2270,14 +2214,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'maple',
     genre: 'plant',
-    labels: { ja: 'もみじ', en: 'Maple leaf' },
-    dexComment: {
+    label: { ja: 'もみじ', en: 'Maple leaf' },
+    comment: {
       ja: "線を5本広げたら、パーの手だと思うはずニャ……秋にまっ赤になるの、何回見てもキレイだニャ。",
       en: "Five lines spread out should look like an open hand, nya... Turning bright red every autumn — it's always beautiful.",
     },
     dexMood: 'smug',
-    choices: { ja: ['もみじ', '手', '星', 'ヒトデ'], en: ['Maple leaf', 'Hand', 'Star', 'Starfish'] },
-    answer: 0,
+    misleads: { ja: ['手', '星', 'ヒトデ'], en: ['Hand', 'Star', 'Starfish'] },
     strokes: [
       line([0.5, 0.62], [0.5, 0.12]),
       line([0.5, 0.62], [0.16, 0.35]),
@@ -2295,14 +2238,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'wave',
     genre: 'plant',
-    labels: { ja: '波', en: 'Wave' },
-    dexComment: {
+    label: { ja: '波', en: 'Wave' },
+    comment: {
       ja: "うずまきを描いたら、目が回ったはずニャ！……ザブーンって音、聞いてるとスッキリするニャ。",
       en: "That spiral should've made you dizzy, nya! ...The big crashing sound is kind of refreshing.",
     },
     dexMood: 'smug',
-    choices: { ja: ['波', 'うずまき', 'カタツムリ', '雲'], en: ['Wave', 'Spiral', 'Snail', 'Cloud'] },
-    answer: 0,
+    misleads: { ja: ['うずまき', 'カタツムリ', '雲'], en: ['Spiral', 'Snail', 'Cloud'] },
     strokes: [
       spiral(0.6, 0.42, 0.02, 0.18, 1.25, 180, 60),
       curve([0.6, 0.24], [0.28, 0.18], [0.12, 0.72]),
@@ -2316,14 +2258,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sprout',
     genre: 'plant',
-    labels: { ja: 'ふたば', en: 'Sprout' },
-    dexComment: {
+    label: { ja: 'ふたば', en: 'Sprout' },
+    comment: {
       ja: "葉っぱを2枚描いたら、チョウが止まってると思うはずニャ！……小さいのにがんばって伸びるの、応援したくなるニャ。",
       en: "Two leaves should look like a butterfly landing, nya! ...So small but trying so hard to grow — I want to cheer it on.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ふたば', 'チョウ', 'リボン', 'クローバー'], en: ['Sprout', 'Butterfly', 'Ribbon bow', 'Clover'] },
-    answer: 0,
+    misleads: { ja: ['チョウ', 'リボン', 'クローバー'], en: ['Butterfly', 'Ribbon bow', 'Clover'] },
     strokes: [
       join(curve([0.5, 0.48], [0.3, 0.26], [0.13, 0.38]), curve([0.13, 0.38], [0.27, 0.56], [0.5, 0.48])),
       mirror(join(curve([0.5, 0.48], [0.3, 0.26], [0.13, 0.38]), curve([0.13, 0.38], [0.27, 0.56], [0.5, 0.48]))),
@@ -2337,14 +2278,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'shootingstar',
     genre: 'plant',
-    labels: { ja: '流れ星', en: 'Shooting star' },
-    dexComment: {
+    label: { ja: '流れ星', en: 'Shooting star' },
+    comment: {
       ja: "ナナメ線は雨の日の定番ニャ！星をつけたら反則ニャ……流れる前に3回お願いするの、ボクには速すぎるニャ。",
       en: "Diagonal lines mean a rainy day, nya! Adding a star is cheating... Making three wishes before it vanishes is too fast for me.",
     },
     dexMood: 'panic',
-    choices: { ja: ['流れ星', '雨', 'ほうき', '花火'], en: ['Shooting star', 'Rain', 'Broom', 'Fireworks'] },
-    answer: 0,
+    misleads: { ja: ['雨', 'ほうき', '花火'], en: ['Rain', 'Broom', 'Fireworks'] },
     strokes: [
       line([0.1, 0.9], [0.5, 0.5]),
       line([0.2, 0.95], [0.56, 0.6]),
@@ -2357,14 +2297,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pinecone',
     genre: 'plant',
-    labels: { ja: 'まつぼっくり', en: 'Pinecone' },
-    dexComment: {
+    label: { ja: 'まつぼっくり', en: 'Pinecone' },
+    comment: {
       ja: "あみあみを描いたら、パイナップルの皮にしか見えないはずニャ……秋の公園で拾うの、ちょっと楽しいニャ。",
       en: "That crosshatch should look like pineapple skin, nya... Picking them up in an autumn park is kinda fun.",
     },
     dexMood: 'smug',
-    choices: { ja: ['まつぼっくり', 'パイナップル', 'ハチの巣', 'ブドウ'], en: ['Pinecone', 'Pineapple', 'Beehive', 'Grapes'] },
-    answer: 0,
+    misleads: { ja: ['パイナップル', 'ハチの巣', 'ブドウ'], en: ['Pineapple', 'Beehive', 'Grapes'] },
     strokes: [
       ellipse(0.5, 0.56, 0.22, 0.3),
       line([0.36, 0.34], [0.66, 0.74]),
@@ -2383,14 +2322,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'cablecar',
     genre: 'vehicle',
-    labels: { ja: 'ロープウェイ', en: 'Cable car' },
-    dexComment: {
+    label: { ja: 'ロープウェイ', en: 'Cable car' },
+    comment: {
       ja: "ロープに板をぶら下げたら、ブランコでしょ普通ニャ……高いところから景色を見るの、ちょっとドキドキするけど好きニャ。",
       en: "A board hanging from a rope is a swing, obviously, nya... Views from up high make me nervous, but I like them.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ロープウェイ', 'ブランコ', '信号機', '鳥かご'], en: ['Cable car', 'Swing', 'Traffic light', 'Birdcage'] },
-    answer: 0,
+    misleads: { ja: ['ブランコ', '信号機', '鳥かご'], en: ['Swing', 'Traffic light', 'Birdcage'] },
     strokes: [
       line([0.04, 0.18], [0.96, 0.3]),
       line([0.5, 0.24], [0.5, 0.36]),
@@ -2405,14 +2343,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'rowboat',
     genre: 'vehicle',
-    labels: { ja: 'ボート', en: 'Rowboat' },
-    dexComment: {
+    label: { ja: 'ボート', en: 'Rowboat' },
+    comment: {
       ja: "ぐにゃっとした線はバナナでしょ普通ニャ！……池でオールをこぐの、ボクもやってみたいニャ。",
       en: "A bendy line means banana, obviously, nya! ...I want to try rowing on a pond too.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ボート', 'バナナ', '三日月', 'くつ'], en: ['Rowboat', 'Banana', 'Crescent moon', 'Shoe'] },
-    answer: 0,
+    misleads: { ja: ['バナナ', '三日月', 'くつ'], en: ['Banana', 'Crescent moon', 'Shoe'] },
     strokes: [
       curve([0.1, 0.48], [0.5, 0.86], [0.9, 0.48]),
       line([0.1, 0.48], [0.9, 0.48]),
@@ -2428,14 +2365,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'kickscooter',
     genre: 'vehicle',
-    labels: { ja: 'キックボード', en: 'Kick scooter' },
-    dexComment: {
+    label: { ja: 'キックボード', en: 'Kick scooter' },
+    comment: {
       ja: "L字の棒はゴルフクラブにしか見えないはずニャ……風を切って走るの、気持ちよさそうでうらやましいニャ。",
       en: "An L-shaped stick should look like a golf club, nya... Zooming through the wind looks so fun — jealous.",
     },
     dexMood: 'smug',
-    choices: { ja: ['キックボード', 'ゴルフクラブ', 'スケートボード', '自転車'], en: ['Kick scooter', 'Golf club', 'Skateboard', 'Bicycle'] },
-    answer: 0,
+    misleads: { ja: ['ゴルフクラブ', 'スケートボード', '自転車'], en: ['Golf club', 'Skateboard', 'Bicycle'] },
     strokes: [
       line([0.72, 0.2], [0.8, 0.76]),
       line([0.8, 0.76], [0.22, 0.76]),
@@ -2451,14 +2387,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'parachute',
     genre: 'vehicle',
-    labels: { ja: 'パラシュート', en: 'Parachute' },
-    dexComment: {
+    label: { ja: 'パラシュート', en: 'Parachute' },
+    comment: {
       ja: "ふわふわのクラゲが空を泳いでるって作戦だったのに、人をぶら下げたらバレたニャ……空からの景色、一度見てみたいニャ。",
       en: "My plan was a jellyfish swimming in the sky, until I hung a person under it, nya... I'd love to see the view from up there.",
     },
     dexMood: 'panic',
-    choices: { ja: ['パラシュート', 'クラゲ', '傘', '気球'], en: ['Parachute', 'Jellyfish', 'Umbrella', 'Hot air balloon'] },
-    answer: 0,
+    misleads: { ja: ['クラゲ', '傘', '気球'], en: ['Jellyfish', 'Umbrella', 'Hot air balloon'] },
     strokes: [
       join(
         arc(0.5, 0.4, 0.36, 0.3, 180, 360, 36),
@@ -2482,14 +2417,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'airship',
     genre: 'vehicle',
-    labels: { ja: '飛行船', en: 'Airship' },
-    dexComment: {
+    label: { ja: '飛行船', en: 'Airship' },
+    comment: {
       ja: "どう見てもおいしいソーセージだったニャ！焼きたてニャ！……空をのんびり進むの、ボクのペースにぴったりニャ。",
       en: "That was obviously a tasty sausage, nya! Fresh off the grill! ...Cruising slowly across the sky is exactly my pace.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['飛行船', 'ソーセージ', '魚', 'ラグビーボール'], en: ['Airship', 'Sausage', 'Fish', 'Rugby ball'] },
-    answer: 0,
+    misleads: { ja: ['ソーセージ', '魚', 'ラグビーボール'], en: ['Sausage', 'Fish', 'Rugby ball'] },
     strokes: [
       ellipse(0.46, 0.42, 0.36, 0.14, 180, 48),
       line([0.76, 0.34], [0.9, 0.22], [0.9, 0.36], [0.82, 0.39]),
@@ -2506,14 +2440,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pagoda',
     genre: 'building',
-    labels: { ja: '五重塔', en: 'Pagoda' },
-    dexComment: {
+    label: { ja: '五重塔', en: 'Pagoda' },
+    comment: {
       ja: "屋根を重ねたらクリスマスツリーにしか見えないはずニャ……てっぺんまで登ってみたいけど、ちょっと怖いニャ。",
       en: "Stacked roofs should look like a Christmas tree, nya... I want to climb to the top, but it's a little scary.",
     },
     dexMood: 'smug',
-    choices: { ja: ['五重塔', 'クリスマスツリー', 'お城', 'ケーキ'], en: ['Pagoda', 'Christmas tree', 'Castle', 'Cake'] },
-    answer: 0,
+    misleads: { ja: ['クリスマスツリー', 'お城', 'ケーキ'], en: ['Christmas tree', 'Castle', 'Cake'] },
     strokes: [
       ...[0, 1, 2, 3, 4].map((i) => {
         const y = 0.22 + i * 0.14;
@@ -2541,14 +2474,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'stadium',
     genre: 'building',
-    labels: { ja: 'スタジアム', en: 'Stadium' },
-    dexComment: {
+    label: { ja: 'スタジアム', en: 'Stadium' },
+    comment: {
       ja: "二重の丸はドーナツに決まってるニャ！……みんなで応援する声、ボクの回路まで熱くなるニャ。",
       en: "Two rings means donut, obviously, nya! ...The crowd cheering together heats up my circuits too.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['スタジアム', 'ドーナツ', 'お皿', 'UFO'], en: ['Stadium', 'Donut', 'Plate', 'UFO'] },
-    answer: 0,
+    misleads: { ja: ['ドーナツ', 'お皿', 'UFO'], en: ['Donut', 'Plate', 'UFO'] },
     strokes: [
       ellipse(0.5, 0.58, 0.42, 0.22, 180, 52),
       ellipse(0.5, 0.58, 0.24, 0.1, 180, 36),
@@ -2565,14 +2497,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tunnel',
     genre: 'building',
-    labels: { ja: 'トンネル', en: 'Tunnel' },
-    dexComment: {
+    label: { ja: 'トンネル', en: 'Tunnel' },
+    comment: {
       ja: "アーチを描いたら、どこでもドアだと思ったはずニャ……出口の光が見えた瞬間、ホッとするニャ。",
       en: "An arch should've made you think of a magic door, nya... That moment you see the light at the exit is such a relief.",
     },
     dexMood: 'smug',
-    choices: { ja: ['トンネル', 'ドア', '虹', 'おわん'], en: ['Tunnel', 'Door', 'Rainbow', 'Bowl'] },
-    answer: 0,
+    misleads: { ja: ['ドア', '虹', 'おわん'], en: ['Door', 'Rainbow', 'Bowl'] },
     strokes: [
       join(line([0.36, 0.82], [0.36, 0.58]), arc(0.5, 0.58, 0.14, 0.14, 180, 360, 20), line([0.64, 0.58], [0.64, 0.82])),
       arc(0.5, 0.58, 0.19, 0.19, 180, 360, 24),
@@ -2588,14 +2519,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'swing',
     genre: 'building',
-    labels: { ja: 'ブランコ', en: 'Swing set' },
-    dexComment: {
+    label: { ja: 'ブランコ', en: 'Swing set' },
+    comment: {
       ja: "三角を2つ並べたら、キャンプのテントだと思うはずニャ……思いっきりこいで、空に近づくのが好きニャ。",
       en: "Two triangles side by side should look like camping tents, nya... I love swinging high enough to get closer to the sky.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ブランコ', 'テント', 'はしご', '鉄棒'], en: ['Swing set', 'Tent', 'Ladder', 'Horizontal bar'] },
-    answer: 0,
+    misleads: { ja: ['テント', 'はしご', '鉄棒'], en: ['Tent', 'Ladder', 'Horizontal bar'] },
     strokes: [
       line([0.12, 0.9], [0.24, 0.2], [0.36, 0.9]),
       mirror(line([0.12, 0.9], [0.24, 0.2], [0.36, 0.9])),
@@ -2609,14 +2539,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'well',
     genre: 'building',
-    labels: { ja: '井戸', en: 'Well' },
-    dexComment: {
+    label: { ja: '井戸', en: 'Well' },
+    comment: {
       ja: "お鍋でカレーを煮てると思わせたかったのに、屋根でバレたニャ……のぞきこむと声が響くの、ちょっと楽しいニャ。",
       en: "I wanted you thinking curry in a pot, and the roof gave it away, nya... It's fun how your voice echoes when you peek in.",
     },
     dexMood: 'panic',
-    choices: { ja: ['井戸', 'お鍋', 'バケツ', '植木鉢'], en: ['Well', 'Pot', 'Bucket', 'Flowerpot'] },
-    answer: 0,
+    misleads: { ja: ['お鍋', 'バケツ', '植木鉢'], en: ['Pot', 'Bucket', 'Flowerpot'] },
     strokes: [
       ellipse(0.5, 0.58, 0.24, 0.06, 180, 36),
       join(line([0.26, 0.58], [0.26, 0.86]), arc(0.5, 0.86, 0.24, 0.06, 180, 0, 20), line([0.74, 0.86], [0.74, 0.58])),
@@ -2636,14 +2565,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'magnifier',
     genre: 'item',
-    labels: { ja: '虫メガネ', en: 'Magnifying glass' },
-    dexComment: {
+    label: { ja: '虫メガネ', en: 'Magnifying glass' },
+    comment: {
       ja: "フライパンで目玉焼きを作る流れだったニャ……小さいアリを大きく見るの、ボクも好きニャ。",
       en: "We were about to fry an egg in that pan, nya... I also like making tiny ants look huge.",
     },
     dexMood: 'smug',
-    choices: { ja: ['虫メガネ', 'フライパン', 'テニスラケット', '手鏡'], en: ['Magnifying glass', 'Frying pan', 'Tennis racket', 'Hand mirror'] },
-    answer: 0,
+    misleads: { ja: ['フライパン', 'テニスラケット', '手鏡'], en: ['Frying pan', 'Tennis racket', 'Hand mirror'] },
     strokes: [
       circle(0.4, 0.4, 0.24, -45, 48),
       join(line([0.57, 0.57], [0.86, 0.86]), line([0.86, 0.86], [0.9, 0.82]), line([0.9, 0.82], [0.61, 0.53])),
@@ -2661,14 +2589,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'teapot',
     genre: 'item',
-    labels: { ja: 'ティーポット', en: 'Teapot' },
-    dexComment: {
+    label: { ja: 'ティーポット', en: 'Teapot' },
+    comment: {
       ja: "まんまるに長い鼻、どう見てもゾウさんだったニャ！……紅茶にお砂糖ふたつ、ボクの好みニャ。",
       en: "A round body with a long trunk — that was clearly an elephant, nya! ...Two sugars in my tea, please.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ティーポット', 'ゾウ', 'じょうろ', 'やかん'], en: ['Teapot', 'Elephant', 'Watering can', 'Kettle'] },
-    answer: 0,
+    misleads: { ja: ['ゾウ', 'じょうろ', 'やかん'], en: ['Elephant', 'Watering can', 'Kettle'] },
     strokes: [
       circle(0.48, 0.58, 0.24, -90, 44),
       join(curve([0.26, 0.52], [0.12, 0.48], [0.1, 0.33]), line([0.1, 0.33], [0.15, 0.31]), curve([0.15, 0.31], [0.18, 0.5], [0.27, 0.62])),
@@ -2684,14 +2611,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'hourglass',
     genre: 'item',
-    labels: { ja: '砂時計', en: 'Hourglass' },
-    dexComment: {
+    label: { ja: '砂時計', en: 'Hourglass' },
+    comment: {
       ja: "上半分だけならワイングラスに見えるはずニャ……サラサラ落ちる砂、ずっと見てられるニャ。",
       en: "Just the top half should look like a wine glass, nya... I could watch the sand trickle down forever.",
     },
     dexMood: 'smug',
-    choices: { ja: ['砂時計', 'ワイングラス', 'リボン', 'チョウ'], en: ['Hourglass', 'Wine glass', 'Ribbon bow', 'Butterfly'] },
-    answer: 0,
+    misleads: { ja: ['ワイングラス', 'リボン', 'チョウ'], en: ['Wine glass', 'Ribbon bow', 'Butterfly'] },
     strokes: [
       // Bowl, then the sand stream (a stem) and the bottom plate (a foot) = a wine glass…
       join(line([0.32, 0.2], [0.68, 0.2]), curve([0.68, 0.2], [0.68, 0.4], [0.52, 0.5]), curve([0.48, 0.5], [0.32, 0.4], [0.32, 0.2])),
@@ -2709,14 +2635,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'letter',
     genre: 'item',
-    labels: { ja: '手紙', en: 'Letter' },
-    dexComment: {
+    label: { ja: '手紙', en: 'Letter' },
+    comment: {
       ja: "ガムテープで止めた段ボール箱のつもりだったのに、ハートでバレたニャ……お手紙をもらえたら、ボクうれしいニャ。",
       en: "It was supposed to be a taped-up box, and the heart gave it away, nya... I'd be really happy to get a letter.",
     },
     dexMood: 'panic',
-    choices: { ja: ['手紙', '箱', 'ポスト', '本'], en: ['Letter', 'Box', 'Mailbox', 'Book'] },
-    answer: 0,
+    misleads: { ja: ['箱', 'ポスト', '本'], en: ['Box', 'Mailbox', 'Book'] },
     strokes: [
       line([0.14, 0.28], [0.86, 0.28], [0.86, 0.76], [0.14, 0.76], [0.14, 0.28]),
       line([0.14, 0.76], [0.42, 0.5]),
@@ -2729,14 +2654,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'present',
     genre: 'item',
-    labels: { ja: 'プレゼント', en: 'Present' },
-    dexComment: {
+    label: { ja: 'プレゼント', en: 'Present' },
+    comment: {
       ja: "十字を入れたら、どう見ても窓ニャ！……リボンをほどく瞬間のワクワク、ボクにもちょうだいニャ。",
       en: "Add a cross and it's obviously a window, nya! ...Give me that thrill of untying the ribbon too.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['プレゼント', '窓', '旗', '本'], en: ['Present', 'Window', 'Flag', 'Book'] },
-    answer: 0,
+    misleads: { ja: ['窓', '旗', '本'], en: ['Window', 'Flag', 'Book'] },
     strokes: [
       line([0.2, 0.42], [0.8, 0.42], [0.8, 0.9], [0.2, 0.9], [0.2, 0.42]),
       line([0.5, 0.42], [0.5, 0.9]),
@@ -2756,14 +2680,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'camel',
     genre: 'animal',
-    labels: { ja: 'ラクダ', en: 'Camel' },
-    dexComment: {
+    label: { ja: 'ラクダ', en: 'Camel' },
+    comment: {
       ja: "こぶを2つ描いたら、どう見ても山が2つ並んでるだけニャ！……砂漠を何日も歩けるなんて、ちょっと尊敬しちゃうニャ。",
       en: "Two humps is obviously just two mountains, nya! ...Walking across the desert for days — I kinda respect that.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ラクダ', '山', 'ウマ', 'キリン'], en: ['Camel', 'Mountains', 'Horse', 'Giraffe'] },
-    answer: 0,
+    misleads: { ja: ['山', 'ウマ', 'キリン'], en: ['Mountains', 'Horse', 'Giraffe'] },
     strokes: [
       join(curve([0.28, 0.52], [0.34, 0.24], [0.45, 0.48]), curve([0.45, 0.48], [0.54, 0.24], [0.64, 0.52])),
       join(curve([0.28, 0.52], [0.22, 0.62], [0.32, 0.66]), line([0.32, 0.66], [0.66, 0.66]), line([0.66, 0.66], [0.66, 0.58])),
@@ -2780,14 +2703,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'mole',
     genre: 'animal',
-    labels: { ja: 'モグラ', en: 'Mole' },
-    dexComment: {
+    label: { ja: 'モグラ', en: 'Mole' },
+    comment: {
       ja: "焼きいもみたいなサツマイモを描いただけニャ！ほくほくニャ！……土の中の秘密のおうち、ちょっと住んでみたいニャ。",
       en: "I just drew a roasted sweet potato, nya! So fluffy! ...I'd like to live in a secret home underground.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['モグラ', 'サツマイモ', 'ネズミ', 'ハムスター'], en: ['Mole', 'Sweet potato', 'Mouse', 'Hamster'] },
-    answer: 0,
+    misleads: { ja: ['サツマイモ', 'ネズミ', 'ハムスター'], en: ['Sweet potato', 'Mouse', 'Hamster'] },
     strokes: [
       join(curve([0.14, 0.56], [0.3, 0.3], [0.66, 0.38]), curve([0.66, 0.38], [0.86, 0.46], [0.84, 0.6]), curve([0.84, 0.6], [0.6, 0.76], [0.2, 0.68]), curve([0.2, 0.68], [0.1, 0.64], [0.14, 0.56])),
       line([0.14, 0.58], [0.06, 0.56]),
@@ -2806,14 +2728,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'flamingo',
     genre: 'animal',
-    labels: { ja: 'フラミンゴ', en: 'Flamingo' },
-    dexComment: {
+    label: { ja: 'フラミンゴ', en: 'Flamingo' },
+    comment: {
       ja: "丸に棒をさしたら、アイスキャンディーにしか見えないはずニャ……片足で立ったまま寝るの、ボクには無理ニャ。",
       en: "An oval on a stick should look like a popsicle, nya... Sleeping on one leg? No way I could do that.",
     },
     dexMood: 'smug',
-    choices: { ja: ['フラミンゴ', 'アイスキャンディー', 'ツル', 'サギ'], en: ['Flamingo', 'Popsicle', 'Crane', 'Heron'] },
-    answer: 0,
+    misleads: { ja: ['アイスキャンディー', 'ツル', 'サギ'], en: ['Popsicle', 'Crane', 'Heron'] },
     strokes: [
       ellipse(0.54, 0.5, 0.18, 0.1),
       line([0.56, 0.6], [0.56, 0.94]),
@@ -2830,14 +2751,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'duck',
     genre: 'animal',
-    labels: { ja: 'アヒル', en: 'Duck' },
-    dexComment: {
+    label: { ja: 'アヒル', en: 'Duck' },
+    comment: {
       ja: "ボートを浮かべたつもりが、頭をのせたらアヒルになったニャ……お風呂にぷかぷか浮かべたいニャ。",
       en: "I floated a boat, and adding a head turned it into a duck, nya... I want one bobbing in my bath.",
     },
     dexMood: 'panic',
-    choices: { ja: ['アヒル', 'ボート', 'ニワトリ', 'ハト'], en: ['Duck', 'Boat', 'Chicken', 'Pigeon'] },
-    answer: 0,
+    misleads: { ja: ['ボート', 'ニワトリ', 'ハト'], en: ['Boat', 'Chicken', 'Pigeon'] },
     strokes: [
       join(curve([0.18, 0.56], [0.22, 0.84], [0.56, 0.84]), curve([0.56, 0.84], [0.9, 0.82], [0.86, 0.5])),
       join(curve([0.86, 0.5], [0.8, 0.58], [0.62, 0.55]), curve([0.62, 0.55], [0.5, 0.53], [0.46, 0.5])),
@@ -2851,14 +2771,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'hippo',
     genre: 'animal',
-    labels: { ja: 'カバ', en: 'Hippo' },
-    dexComment: {
+    label: { ja: 'カバ', en: 'Hippo' },
+    comment: {
       ja: "どう見てもピーナッツの殻だったニャ！おつまみニャ！……大きなお口であくびするとこ、かわいいニャ。",
       en: "That was clearly a peanut shell, nya! Snack time! ...Their giant yawns are adorable.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['カバ', 'ピーナッツ', 'ブタ', 'ゾウ'], en: ['Hippo', 'Peanut', 'Pig', 'Elephant'] },
-    answer: 0,
+    misleads: { ja: ['ピーナッツ', 'ブタ', 'ゾウ'], en: ['Peanut', 'Pig', 'Elephant'] },
     strokes: [
       arc(0.5, 0.36, 0.2, 0.18, 150, 390, 36),
       ellipse(0.5, 0.64, 0.32, 0.2),
@@ -2878,14 +2797,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'peacock',
     genre: 'animal',
-    labels: { ja: 'クジャク', en: 'Peacock' },
-    dexComment: {
+    label: { ja: 'クジャク', en: 'Peacock' },
+    comment: {
       ja: "アーチを2本描いたら、雨上がりの虹を思い浮かべるはずニャ……羽を広げた瞬間、ボクも拍手しちゃうニャ。",
       en: "Two arches should make you think of a rainbow after the rain, nya... When they spread those feathers, I clap too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['クジャク', '虹', 'ニワトリ', 'オウム'], en: ['Peacock', 'Rainbow', 'Chicken', 'Parrot'] },
-    answer: 0,
+    misleads: { ja: ['虹', 'ニワトリ', 'オウム'], en: ['Rainbow', 'Chicken', 'Parrot'] },
     strokes: [
       arc(0.5, 0.64, 0.44, 0.44, 180, 360, 48),
       arc(0.5, 0.64, 0.3, 0.3, 180, 360, 36),
@@ -2904,14 +2822,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'hermitcrab',
     genre: 'creature',
-    labels: { ja: 'ヤドカリ', en: 'Hermit crab' },
-    dexComment: {
+    label: { ja: 'ヤドカリ', en: 'Hermit crab' },
+    comment: {
       ja: "うずまきの殻はカタツムリで決まりだと思ったのに、ハサミでバレたニャ……お引っ越しのたびに新しい家、うらやましいニャ。",
       en: "A spiral shell screams snail, and the claw gave it away, nya... A new house every move — so jealous.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ヤドカリ', 'カタツムリ', 'カニ', 'アンモナイト'], en: ['Hermit crab', 'Snail', 'Crab', 'Ammonite'] },
-    answer: 0,
+    misleads: { ja: ['カタツムリ', 'カニ', 'アンモナイト'], en: ['Snail', 'Crab', 'Ammonite'] },
     strokes: [
       spiral(0.58, 0.46, 0.02, 0.2, 2.25, 0, 90),
       circle(0.58, 0.46, 0.24, 180, 44),
@@ -2928,14 +2845,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'scorpion',
     genre: 'creature',
-    labels: { ja: 'サソリ', en: 'Scorpion' },
-    dexComment: {
+    label: { ja: 'サソリ', en: 'Scorpion' },
+    comment: {
       ja: "カーブした先に針をつけたら、釣り針にしか見えないはずニャ……光を当てると光るって聞いて、ちょっと見てみたいニャ。",
       en: "A curve with a hook on the end should look like a fishhook, nya... I heard they glow under UV light — I want to see that.",
     },
     dexMood: 'smug',
-    choices: { ja: ['サソリ', '釣り針', 'ザリガニ', 'クモ'], en: ['Scorpion', 'Fishhook', 'Crayfish', 'Spider'] },
-    answer: 0,
+    misleads: { ja: ['釣り針', 'ザリガニ', 'クモ'], en: ['Fishhook', 'Crayfish', 'Spider'] },
     strokes: [
       join(curve([0.6, 0.64], [0.9, 0.62], [0.85, 0.32]), curve([0.85, 0.32], [0.8, 0.2], [0.7, 0.24])),
       line([0.7, 0.24], [0.64, 0.3], [0.72, 0.31], [0.7, 0.24]),
@@ -2954,14 +2870,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'clione',
     genre: 'creature',
-    labels: { ja: 'クリオネ', en: 'Clione' },
-    dexComment: {
+    label: { ja: 'クリオネ', en: 'Clione' },
+    comment: {
       ja: "丸い頭にひらひらの服、どう見てもてるてる坊主ニャ！……「流氷の天使」ってあだ名、ちょっとうらやましいニャ。",
       en: "A round head and a flowing robe is obviously a teru-teru bozu doll, nya! ...'Sea angel' is such a nice nickname, I'm jealous.",
     },
     dexMood: 'smug',
-    choices: { ja: ['クリオネ', 'てるてる坊主', 'クラゲ', 'おばけ'], en: ['Clione', 'Teru-teru bozu doll', 'Jellyfish', 'Ghost'] },
-    answer: 0,
+    misleads: { ja: ['てるてる坊主', 'クラゲ', 'おばけ'], en: ['Teru-teru bozu doll', 'Jellyfish', 'Ghost'] },
     strokes: [
       circle(0.5, 0.3, 0.12, 90, 32),
       join(curve([0.4, 0.37], [0.36, 0.7], [0.5, 0.9]), curve([0.5, 0.9], [0.64, 0.7], [0.6, 0.37])),
@@ -2978,14 +2893,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'crayfish',
     genre: 'creature',
-    labels: { ja: 'ザリガニ', en: 'Crayfish' },
-    dexComment: {
+    label: { ja: 'ザリガニ', en: 'Crayfish' },
+    comment: {
       ja: "ハサミを2本描いたら、工具箱のペンチだと思うはずニャ……田んぼで見つけたら、そっと逃がしてあげたいニャ。",
       en: "Two big claws should look like pliers from a toolbox, nya... If I found one in a rice paddy, I'd gently let it go.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ザリガニ', 'ペンチ', 'エビ', 'カニ'], en: ['Crayfish', 'Pliers', 'Shrimp', 'Crab'] },
-    answer: 0,
+    misleads: { ja: ['ペンチ', 'エビ', 'カニ'], en: ['Pliers', 'Shrimp', 'Crab'] },
     strokes: [
       join(curve([0.38, 0.36], [0.2, 0.3], [0.16, 0.14]), curve([0.16, 0.14], [0.24, 0.2], [0.28, 0.24]), curve([0.28, 0.24], [0.26, 0.12], [0.34, 0.08]), curve([0.34, 0.08], [0.4, 0.22], [0.38, 0.36])),
       mirror(join(curve([0.38, 0.36], [0.2, 0.3], [0.16, 0.14]), curve([0.16, 0.14], [0.24, 0.2], [0.28, 0.24]), curve([0.28, 0.24], [0.26, 0.12], [0.34, 0.08]), curve([0.34, 0.08], [0.4, 0.22], [0.38, 0.36]))),
@@ -3007,14 +2921,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'seaurchin',
     genre: 'creature',
-    labels: { ja: 'ウニ', en: 'Sea urchin' },
-    dexComment: {
+    label: { ja: 'ウニ', en: 'Sea urchin' },
+    comment: {
       ja: "線を3本交差させたら、雪の結晶で冬気分ニャ！……軍艦巻きのウニ、ボクも一度食べてみたいニャ。",
       en: "Three crossing lines give winter snowflake vibes, nya! ...I want to try sea urchin sushi someday.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ウニ', '雪の結晶', 'いが栗', 'ハリネズミ'], en: ['Sea urchin', 'Snowflake', 'Chestnut burr', 'Hedgehog'] },
-    answer: 0,
+    misleads: { ja: ['雪の結晶', 'いが栗', 'ハリネズミ'], en: ['Snowflake', 'Chestnut burr', 'Hedgehog'] },
     strokes: [
       ...[0, 60, 120].map((deg) => place(line([0, -0.34], [0, 0.34]), 0.5, 0.52, deg)),
       ...[0, 60, 120, 180, 240, 300].map((deg) => place(line([0, -0.34], [-0.05, -0.28]), 0.5, 0.52, deg)),
@@ -3030,14 +2943,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'anglerfish',
     genre: 'creature',
-    labels: { ja: 'チョウチンアンコウ', en: 'Anglerfish' },
-    dexComment: {
+    label: { ja: 'チョウチンアンコウ', en: 'Anglerfish' },
+    comment: {
       ja: "夜道を照らす街灯を描いてたのに、口を描いたら急にこわくなったニャ……暗い海で自分で明かりをつけるの、えらいニャ。",
       en: "I was drawing a street lamp for a dark road, then the mouth made it scary, nya... Making your own light in the deep sea is impressive.",
     },
     dexMood: 'panic',
-    choices: { ja: ['チョウチンアンコウ', '街灯', 'フグ', 'ナマズ'], en: ['Anglerfish', 'Street lamp', 'Pufferfish', 'Catfish'] },
-    answer: 0,
+    misleads: { ja: ['街灯', 'フグ', 'ナマズ'], en: ['Street lamp', 'Pufferfish', 'Catfish'] },
     strokes: [
       curve([0.42, 0.36], [0.44, 0.1], [0.64, 0.12]),
       circle(0.67, 0.15, 0.045, -90, 14),
@@ -3054,14 +2966,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'croissant',
     genre: 'food',
-    labels: { ja: 'クロワッサン', en: 'Croissant' },
-    dexComment: {
+    label: { ja: 'クロワッサン', en: 'Croissant' },
+    comment: {
       ja: "この形は三日月って、宇宙の常識ニャ！……焼きたてのサクサクのとこ、いちばん好きニャ。",
       en: "This shape is a crescent moon, everyone in the universe knows it, nya! ...The fresh flaky crunch is my favorite part.",
     },
     dexMood: 'smug',
-    choices: { ja: ['クロワッサン', '三日月', 'バナナ', 'ぎょうざ'], en: ['Croissant', 'Crescent moon', 'Banana', 'Gyoza'] },
-    answer: 0,
+    misleads: { ja: ['三日月', 'バナナ', 'ぎょうざ'], en: ['Crescent moon', 'Banana', 'Gyoza'] },
     strokes: [
       join(curve([0.14, 0.64], [0.5, 0.1], [0.86, 0.64]), curve([0.86, 0.64], [0.8, 0.74], [0.72, 0.67]), curve([0.72, 0.67], [0.5, 0.38], [0.28, 0.67]), curve([0.28, 0.67], [0.2, 0.74], [0.14, 0.64])),
       curve([0.3, 0.44], [0.37, 0.52], [0.34, 0.62]),
@@ -3076,14 +2987,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'taiyaki',
     genre: 'food',
-    labels: { ja: 'たい焼き', en: 'Taiyaki' },
-    dexComment: {
+    label: { ja: 'たい焼き', en: 'Taiyaki' },
+    comment: {
       ja: "魚を描いたら魚って答えるはずニャ！……しっぽの先まであんこ入り、ボクは断然しっぽ派ニャ。",
       en: "If I draw a fish, you should answer fish, nya! ...Red bean paste all the way to the tail — I'm team tail, for sure.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['たい焼き', '魚', 'クジラ', 'パン'], en: ['Taiyaki', 'Fish', 'Whale', 'Bread'] },
-    answer: 0,
+    misleads: { ja: ['魚', 'クジラ', 'パン'], en: ['Fish', 'Whale', 'Bread'] },
     strokes: [
       join(curve([0.76, 0.52], [0.48, 0.2], [0.12, 0.52]), curve([0.12, 0.52], [0.48, 0.82], [0.76, 0.52])),
       line([0.76, 0.52], [0.92, 0.38], [0.9, 0.52], [0.92, 0.66], [0.76, 0.52]),
@@ -3104,14 +3014,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'oden',
     genre: 'food',
-    labels: { ja: 'おでん', en: 'Oden' },
-    dexComment: {
+    label: { ja: 'おでん', en: 'Oden' },
+    comment: {
       ja: "三角・丸・四角を並べたら、道路標識の勉強だと思うはずニャ……寒い日の大根、しみしみでたまらないニャ。",
       en: "Triangle, circle, square — you should've thought it was a road-sign quiz, nya... Soaked daikon on a cold day is the best.",
     },
     dexMood: 'smug',
-    choices: { ja: ['おでん', '道路標識', 'お団子', 'やきとり'], en: ['Oden', 'Road signs', 'Dango', 'Yakitori'] },
-    answer: 0,
+    misleads: { ja: ['道路標識', 'お団子', 'やきとり'], en: ['Road signs', 'Dango', 'Yakitori'] },
     strokes: [
       line([0.5, 0.12], [0.63, 0.34], [0.37, 0.34], [0.5, 0.12]),
       circle(0.5, 0.49, 0.12, -90, 32),
@@ -3129,14 +3038,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'gyoza',
     genre: 'food',
-    labels: { ja: 'ぎょうざ', en: 'Gyoza' },
-    dexComment: {
+    label: { ja: 'ぎょうざ', en: 'Gyoza' },
+    comment: {
       ja: "半円を描いたら、おせちのかまぼこだと思うはずニャ……パリッと焼けた羽根つき、ボクの推しニャ。",
       en: "A half circle should look like kamaboko from New Year's food, nya... The crispy winged edge is my favorite.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ぎょうざ', 'かまぼこ', 'クロワッサン', 'どら焼き'], en: ['Gyoza', 'Kamaboko fish cake', 'Croissant', 'Dorayaki'] },
-    answer: 0,
+    misleads: { ja: ['かまぼこ', 'クロワッサン', 'どら焼き'], en: ['Kamaboko fish cake', 'Croissant', 'Dorayaki'] },
     strokes: [
       join(curve([0.14, 0.62], [0.5, 0.16], [0.86, 0.62]), line([0.86, 0.62], [0.14, 0.62])),
       line([0.28, 0.44], [0.3, 0.38], [0.34, 0.42]),
@@ -3153,14 +3061,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'parfait',
     genre: 'food',
-    labels: { ja: 'パフェ', en: 'Parfait' },
-    dexComment: {
+    label: { ja: 'パフェ', en: 'Parfait' },
+    comment: {
       ja: "優勝トロフィーを描いてたのに、クリームを盛ったらバレたニャ……いちばん下のコーンフレークまで、ちゃんと食べるニャ。",
       en: "I was drawing a championship trophy, and piling on cream gave it away, nya... I eat every bit, down to the cornflakes at the bottom.",
     },
     dexMood: 'panic',
-    choices: { ja: ['パフェ', 'トロフィー', 'ソフトクリーム', '花びん'], en: ['Parfait', 'Trophy', 'Soft-serve', 'Vase'] },
-    answer: 0,
+    misleads: { ja: ['トロフィー', 'ソフトクリーム', '花びん'], en: ['Trophy', 'Soft-serve', 'Vase'] },
     strokes: [
       line([0.34, 0.42], [0.66, 0.42], [0.6, 0.74], [0.4, 0.74], [0.34, 0.42]),
       line([0.5, 0.74], [0.5, 0.88]),
@@ -3178,14 +3085,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'ginkgo',
     genre: 'plant',
-    labels: { ja: 'イチョウ', en: 'Ginkgo leaf' },
-    dexComment: {
+    label: { ja: 'イチョウ', en: 'Ginkgo leaf' },
+    comment: {
       ja: "柄をつけたら、夏祭りのうちわにしか見えないはずニャ……黄色いじゅうたん、秋に歩くと気持ちいいニャ。",
       en: "Add a handle and it should look like a summer-festival fan, nya... Walking on that yellow carpet in autumn feels so nice.",
     },
     dexMood: 'smug',
-    choices: { ja: ['イチョウ', 'うちわ', '扇子', 'ホタテ'], en: ['Ginkgo leaf', 'Hand fan', 'Folding fan', 'Scallop'] },
-    answer: 0,
+    misleads: { ja: ['うちわ', '扇子', 'ホタテ'], en: ['Hand fan', 'Folding fan', 'Scallop'] },
     strokes: [
       join(line([0.5, 0.64], [0.16, 0.34]), curve([0.16, 0.34], [0.3, 0.12], [0.48, 0.16]), line([0.48, 0.16], [0.5, 0.25], [0.52, 0.16]), curve([0.52, 0.16], [0.7, 0.12], [0.84, 0.34]), line([0.84, 0.34], [0.5, 0.64])),
       line([0.5, 0.64], [0.53, 0.92]),
@@ -3200,14 +3106,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'waterlily',
     genre: 'plant',
-    labels: { ja: 'スイレン', en: 'Water lily' },
-    dexComment: {
+    label: { ja: 'スイレン', en: 'Water lily' },
+    comment: {
       ja: "1切れ食べたあとのピザにしか見えないはずニャ！……池にぷかぷか浮かぶ花、ずっと眺めてられるニャ。",
       en: "That should look exactly like a pizza with one slice eaten, nya! ...I could watch those floating flowers forever.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['スイレン', 'ピザ', 'ハス', 'クローバー'], en: ['Water lily', 'Pizza', 'Lotus', 'Clover'] },
-    answer: 0,
+    misleads: { ja: ['ピザ', 'ハス', 'クローバー'], en: ['Pizza', 'Lotus', 'Clover'] },
     strokes: [
       join(line([0.5, 0.66], [0.769, 0.519]), arc(0.5, 0.66, 0.38, 0.2, -45, 270, 48), line([0.5, 0.46], [0.5, 0.66])),
       line([0.5, 0.66], [0.26, 0.6]),
@@ -3224,14 +3129,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'icicle',
     genre: 'plant',
-    labels: { ja: 'つらら', en: 'Icicles' },
-    dexComment: {
+    label: { ja: 'つらら', en: 'Icicles' },
+    comment: {
       ja: "ギザギザを並べたら、大工さんののこぎりだと思うはずニャ……ポタポタ落ちるしずくの音、ちょっと好きニャ。",
       en: "A row of zigzags should look like a carpenter's saw, nya... I kinda like the sound of the drips.",
     },
     dexMood: 'panic',
-    choices: { ja: ['つらら', 'のこぎり', 'きば', 'ろうそく'], en: ['Icicles', 'Saw', 'Fangs', 'Candles'] },
-    answer: 0,
+    misleads: { ja: ['のこぎり', 'きば', 'ろうそく'], en: ['Saw', 'Fangs', 'Candles'] },
     strokes: [
       line([0.04, 0.2], [0.96, 0.2]),
       line(
@@ -3250,14 +3154,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'morningglory',
     genre: 'plant',
-    labels: { ja: 'アサガオ', en: 'Morning glory' },
-    dexComment: {
+    label: { ja: 'アサガオ', en: 'Morning glory' },
+    comment: {
       ja: "ラッパを描いたら、パッパカパーンって吹きたくなるはずニャ……夏休みの観察日記、ボクもつけてみたいニャ。",
       en: "Draw a trumpet and you should want to blow a fanfare, nya... I want to keep a summer-vacation plant diary too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['アサガオ', 'ラッパ', 'チューリップ', 'メガホン'], en: ['Morning glory', 'Trumpet', 'Tulip', 'Megaphone'] },
-    answer: 0,
+    misleads: { ja: ['ラッパ', 'チューリップ', 'メガホン'], en: ['Trumpet', 'Tulip', 'Megaphone'] },
     strokes: [
       ellipse(0.46, 0.28, 0.28, 0.1, 180, 40),
       line([0.18, 0.29], [0.44, 0.62]),
@@ -3273,14 +3176,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tsukushi',
     genre: 'plant',
-    labels: { ja: 'つくし', en: 'Horsetail shoots' },
-    dexComment: {
+    label: { ja: 'つくし', en: 'Horsetail shoots' },
+    comment: {
       ja: "頭に棒をつけたら、マッチ棒にしか見えないはずニャ……春に見つけると、なんだかうれしくなるニャ。",
       en: "A head on a stick should look like a matchstick, nya... Spotting them in spring just makes me happy.",
     },
     dexMood: 'smug',
-    choices: { ja: ['つくし', 'マッチ', 'えんぴつ', 'キノコ'], en: ['Horsetail shoots', 'Matchstick', 'Pencil', 'Mushroom'] },
-    answer: 0,
+    misleads: { ja: ['マッチ', 'えんぴつ', 'キノコ'], en: ['Matchstick', 'Pencil', 'Mushroom'] },
     strokes: [
       ellipse(0.4, 0.3, 0.06, 0.12),
       line([0.4, 0.42], [0.4, 0.9]),
@@ -3300,14 +3202,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'baobab',
     genre: 'plant',
-    labels: { ja: 'バオバブ', en: 'Baobab' },
-    dexComment: {
+    label: { ja: 'バオバブ', en: 'Baobab' },
+    comment: {
       ja: "どう見てもジュースのびんだったニャ！フタを開けるとこだったニャ！……何千年も生きる木、ボクよりずっと先輩ニャ。",
       en: "That was obviously a juice bottle, nya! I almost opened the cap! ...A tree that lives for thousands of years is way more senior than me.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['バオバブ', 'びん', 'ブロッコリー', 'ヤシの木'], en: ['Baobab', 'Bottle', 'Broccoli', 'Palm tree'] },
-    answer: 0,
+    misleads: { ja: ['びん', 'ブロッコリー', 'ヤシの木'], en: ['Bottle', 'Broccoli', 'Palm tree'] },
     strokes: [
       join(curve([0.38, 0.9], [0.28, 0.6], [0.42, 0.4]), line([0.42, 0.4], [0.44, 0.3])),
       join(line([0.56, 0.3], [0.58, 0.4]), curve([0.58, 0.4], [0.72, 0.6], [0.62, 0.9])),
@@ -3324,14 +3225,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bulldozer',
     genre: 'vehicle',
-    labels: { ja: 'ブルドーザー', en: 'Bulldozer' },
-    dexComment: {
+    label: { ja: 'ブルドーザー', en: 'Bulldozer' },
+    comment: {
       ja: "四角い板に取っ手をつけたら、ちりとりでお掃除ニャ……でっかい土の山をぐいぐい押すの、見てて気持ちいいニャ。",
       en: "A board with a handle is a dustpan — cleaning time, nya... Watching it shove giant dirt piles is so satisfying.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ブルドーザー', 'ちりとり', '戦車', 'トラクター'], en: ['Bulldozer', 'Dustpan', 'Tank', 'Tractor'] },
-    answer: 0,
+    misleads: { ja: ['ちりとり', '戦車', 'トラクター'], en: ['Dustpan', 'Tank', 'Tractor'] },
     strokes: [
       join(line([0.08, 0.5], [0.08, 0.8]), curve([0.08, 0.8], [0.2, 0.78], [0.24, 0.7]), line([0.24, 0.7], [0.24, 0.5], [0.08, 0.5])),
       line([0.24, 0.62], [0.4, 0.6]),
@@ -3348,14 +3248,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'rickshaw',
     genre: 'vehicle',
-    labels: { ja: '人力車', en: 'Rickshaw' },
-    dexComment: {
+    label: { ja: '人力車', en: 'Rickshaw' },
+    comment: {
       ja: "ほろ付きの座席はベビーカーで決まりだと思ったのに、長い持ち手でバレたニャ……観光地でゆっくり乗ってみたいニャ。",
       en: "A hooded seat is definitely a stroller, and the long poles gave it away, nya... I want a slow ride at a tourist spot.",
     },
     dexMood: 'panic',
-    choices: { ja: ['人力車', 'ベビーカー', '馬車', 'いす'], en: ['Rickshaw', 'Stroller', 'Horse carriage', 'Chair'] },
-    answer: 0,
+    misleads: { ja: ['ベビーカー', '馬車', 'いす'], en: ['Stroller', 'Horse carriage', 'Chair'] },
     strokes: [
       join(curve([0.3, 0.5], [0.24, 0.2], [0.52, 0.2]), line([0.52, 0.2], [0.44, 0.34])),
       line([0.3, 0.5], [0.56, 0.5], [0.6, 0.58]),
@@ -3370,14 +3269,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'cranetruck',
     genre: 'vehicle',
-    labels: { ja: 'クレーン車', en: 'Crane truck' },
-    dexComment: {
+    label: { ja: 'クレーン車', en: 'Crane truck' },
+    comment: {
       ja: "長いさおに糸と針、どう見ても釣りの時間ニャ……重いものをひょいっと持ち上げるの、力持ちでカッコいいニャ。",
       en: "A long rod with a line and hook — that's fishing time, nya... Lifting heavy stuff so easily is super cool.",
     },
     dexMood: 'smug',
-    choices: { ja: ['クレーン車', 'つりざお', 'はしご', 'ショベルカー'], en: ['Crane truck', 'Fishing rod', 'Ladder', 'Excavator'] },
-    answer: 0,
+    misleads: { ja: ['つりざお', 'はしご', 'ショベルカー'], en: ['Fishing rod', 'Ladder', 'Excavator'] },
     strokes: [
       line([0.4, 0.58], [0.82, 0.12]),
       line([0.82, 0.12], [0.82, 0.48]),
@@ -3395,14 +3293,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sled',
     genre: 'vehicle',
-    labels: { ja: 'そり', en: 'Sled' },
-    dexComment: {
+    label: { ja: 'そり', en: 'Sled' },
+    comment: {
       ja: "板に脚をつけたら、スケボーかベンチのどっちかニャ！……雪の坂をビューンってすべるの、一回やってみたいニャ。",
       en: "A board with legs is either a skateboard or a bench, nya! ...I want to zoom down a snowy hill just once.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['そり', 'スケートボード', 'ベンチ', 'スキー'], en: ['Sled', 'Skateboard', 'Bench', 'Skis'] },
-    answer: 0,
+    misleads: { ja: ['スケートボード', 'ベンチ', 'スキー'], en: ['Skateboard', 'Bench', 'Skis'] },
     strokes: [
       line([0.16, 0.6], [0.8, 0.6]),
       line([0.24, 0.6], [0.24, 0.72]),
@@ -3420,14 +3317,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'minecart',
     genre: 'vehicle',
-    labels: { ja: 'トロッコ', en: 'Mine cart' },
-    dexComment: {
+    label: { ja: 'トロッコ', en: 'Mine cart' },
+    comment: {
       ja: "台形を描いたらバケツでしょ普通ニャ……ガタゴト揺れながら洞窟を進むの、冒険っぽくてワクワクするニャ。",
       en: "A trapezoid means bucket, obviously, nya... Rattling through a cave feels like an adventure — so exciting.",
     },
     dexMood: 'smug',
-    choices: { ja: ['トロッコ', 'バケツ', 'ベビーカー', '電車'], en: ['Mine cart', 'Bucket', 'Stroller', 'Train'] },
-    answer: 0,
+    misleads: { ja: ['バケツ', 'ベビーカー', '電車'], en: ['Bucket', 'Stroller', 'Train'] },
     strokes: [
       line([0.2, 0.36], [0.8, 0.36], [0.72, 0.66], [0.28, 0.66], [0.2, 0.36]),
       line([0.18, 0.32], [0.82, 0.32], [0.82, 0.36], [0.18, 0.36], [0.18, 0.32]),
@@ -3446,14 +3342,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'circus',
     genre: 'building',
-    labels: { ja: 'サーカス小屋', en: 'Circus tent' },
-    dexComment: {
+    label: { ja: 'サーカス小屋', en: 'Circus tent' },
+    comment: {
       ja: "しましまの三角は、ビーチのパラソルにしか見えないはずニャ……ピエロの玉乗り、ボクも練習したいニャ。",
       en: "Striped triangles should look like a beach umbrella, nya... I want to practice ball-balancing like a clown.",
     },
     dexMood: 'smug',
-    choices: { ja: ['サーカス小屋', 'パラソル', 'テント', 'メリーゴーランド'], en: ['Circus tent', 'Beach umbrella', 'Tent', 'Merry-go-round'] },
-    answer: 0,
+    misleads: { ja: ['パラソル', 'テント', 'メリーゴーランド'], en: ['Beach umbrella', 'Tent', 'Merry-go-round'] },
     strokes: [
       join(curve([0.14, 0.46], [0.36, 0.36], [0.5, 0.12]), curve([0.5, 0.12], [0.64, 0.36], [0.86, 0.46])),
       join(
@@ -3477,14 +3372,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'dam',
     genre: 'building',
-    labels: { ja: 'ダム', en: 'Dam' },
-    dexComment: {
+    label: { ja: 'ダム', en: 'Dam' },
+    comment: {
       ja: "横線を並べたら階段にしか見えないはずだったのに、水でバレたニャ……放流のドドドって迫力、ちょっと見てみたいニャ。",
       en: "Horizontal lines should've looked like stairs, and the water gave it away, nya... I want to see that roaring water release.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ダム', '階段', '滝', '橋'], en: ['Dam', 'Stairs', 'Waterfall', 'Bridge'] },
-    answer: 0,
+    misleads: { ja: ['階段', '滝', '橋'], en: ['Stairs', 'Waterfall', 'Bridge'] },
     strokes: [
       line([0.14, 0.46], [0.86, 0.46]),
       line([0.12, 0.6], [0.88, 0.6]),
@@ -3503,14 +3397,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'watermill',
     genre: 'building',
-    labels: { ja: '水車小屋', en: 'Watermill' },
-    dexComment: {
+    label: { ja: '水車小屋', en: 'Watermill' },
+    comment: {
       ja: "ぐるっと丸にスポークを描いたら、遊園地の観覧車ニャ！……ゆっくり回る音、聞いてると眠くなるニャ。",
       en: "A circle with spokes is an amusement-park Ferris wheel, nya! ...The slow turning sound makes me sleepy.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['水車小屋', '観覧車', '風車', '時計'], en: ['Watermill', 'Ferris wheel', 'Windmill', 'Clock'] },
-    answer: 0,
+    misleads: { ja: ['観覧車', '風車', '時計'], en: ['Ferris wheel', 'Windmill', 'Clock'] },
     strokes: [
       circle(0.34, 0.62, 0.22, -90, 44),
       circle(0.34, 0.62, 0.04, -90, 12),
@@ -3527,14 +3420,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'triumpharch',
     genre: 'building',
-    labels: { ja: '凱旋門', en: 'Triumphal arch' },
-    dexComment: {
+    label: { ja: '凱旋門', en: 'Triumphal arch' },
+    comment: {
       ja: "アーチの穴を描いたら、山のトンネルだと思うはずニャ……くぐったら、ちょっと勝った気分になれそうニャ。",
       en: "An arched opening should make you think of a mountain tunnel, nya... Walking through it would make me feel like a winner.",
     },
     dexMood: 'smug',
-    choices: { ja: ['凱旋門', 'トンネル', 'お城', 'ドア'], en: ['Triumphal arch', 'Tunnel', 'Castle', 'Door'] },
-    answer: 0,
+    misleads: { ja: ['トンネル', 'お城', 'ドア'], en: ['Tunnel', 'Castle', 'Door'] },
     strokes: [
       join(line([0.4, 0.88], [0.4, 0.56]), arc(0.5, 0.56, 0.1, 0.12, 180, 360, 18), line([0.6, 0.56], [0.6, 0.88])),
       line([0.16, 0.88], [0.16, 0.26], [0.84, 0.26], [0.84, 0.88]),
@@ -3551,14 +3443,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'onsen',
     genre: 'building',
-    labels: { ja: '温泉', en: 'Hot spring' },
-    dexComment: {
+    label: { ja: '温泉', en: 'Hot spring' },
+    comment: {
       ja: "お椀から湯気が出てたら、あったかいスープに決まってるニャ！……おサルさんと一緒に、ボクもつかりたいニャ。",
       en: "Steam rising from a bowl means hot soup, obviously, nya! ...I want to soak in there with the monkeys too.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['温泉', 'スープ', 'ラーメン', 'お風呂'], en: ['Hot spring', 'Soup', 'Ramen', 'Bathtub'] },
-    answer: 0,
+    misleads: { ja: ['スープ', 'ラーメン', 'お風呂'], en: ['Soup', 'Ramen', 'Bathtub'] },
     strokes: [
       arc(0.5, 0.62, 0.3, 0.16, 0, 180, 24),
       join(curve([0.4, 0.5], [0.34, 0.42], [0.4, 0.34]), curve([0.4, 0.34], [0.46, 0.26], [0.4, 0.18])),
@@ -3577,14 +3468,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'busstop',
     genre: 'building',
-    labels: { ja: 'バス停', en: 'Bus stop' },
-    dexComment: {
+    label: { ja: 'バス停', en: 'Bus stop' },
+    comment: {
       ja: "丸に棒をさしたら、ペロペロキャンディにしか見えないはずニャ……ベンチでバスを待つ時間、ちょっと好きニャ。",
       en: "A circle on a stick should look like a lollipop, nya... I kinda like waiting for the bus on a bench.",
     },
     dexMood: 'smug',
-    choices: { ja: ['バス停', 'ペロペロキャンディ', '信号機', '虫メガネ'], en: ['Bus stop', 'Lollipop', 'Traffic light', 'Magnifying glass'] },
-    answer: 0,
+    misleads: { ja: ['ペロペロキャンディ', '信号機', '虫メガネ'], en: ['Lollipop', 'Traffic light', 'Magnifying glass'] },
     strokes: [
       circle(0.4, 0.24, 0.14, -90, 36),
       line([0.4, 0.38], [0.4, 0.9]),
@@ -3604,14 +3494,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'microphone',
     genre: 'item',
-    labels: { ja: 'マイク', en: 'Microphone' },
-    dexComment: {
+    label: { ja: 'マイク', en: 'Microphone' },
+    comment: {
       ja: "アイスのコーンに丸いのをのせたら、アイスクリームでしょ普通ニャ！……カラオケで一曲歌ってみたいニャ。",
       en: "A ball on a cone is ice cream, obviously, nya! ...I want to sing one song at karaoke.",
     },
     dexMood: 'panic',
-    choices: { ja: ['マイク', 'アイスクリーム', '懐中電灯', 'マラカス'], en: ['Microphone', 'Ice cream', 'Flashlight', 'Maracas'] },
-    answer: 0,
+    misleads: { ja: ['アイスクリーム', '懐中電灯', 'マラカス'], en: ['Ice cream', 'Flashlight', 'Maracas'] },
     strokes: [
       circle(0.5, 0.28, 0.14, 90, 36),
       line([0.4, 0.4], [0.46, 0.8], [0.54, 0.8], [0.6, 0.4]),
@@ -3629,14 +3518,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'telescope',
     genre: 'item',
-    labels: { ja: '望遠鏡', en: 'Telescope' },
-    dexComment: {
+    label: { ja: '望遠鏡', en: 'Telescope' },
+    comment: {
       ja: "ななめの筒と丸い台、どう見ても大砲ニャ！ドーンニャ！……夜空の星をのぞくの、いつか一緒にしたいニャ。",
       en: "A slanted tube on a round mount is obviously a cannon, nya! BOOM! ...Someday I want to look at the stars together.",
     },
     dexMood: 'smug',
-    choices: { ja: ['望遠鏡', '大砲', 'ラッパ', 'ホース'], en: ['Telescope', 'Cannon', 'Trumpet', 'Hose'] },
-    answer: 0,
+    misleads: { ja: ['大砲', 'ラッパ', 'ホース'], en: ['Cannon', 'Trumpet', 'Hose'] },
     strokes: [
       place(line([-0.3, -0.06], [0.3, -0.09], [0.3, 0.09], [-0.3, 0.06], [-0.3, -0.06]), 0.5, 0.4, -25),
       circle(0.5, 0.48, 0.035, -90, 12),
@@ -3652,14 +3540,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'wateringcan',
     genre: 'item',
-    labels: { ja: 'じょうろ', en: 'Watering can' },
-    dexComment: {
+    label: { ja: 'じょうろ', en: 'Watering can' },
+    comment: {
       ja: "取っ手つきの入れ物は、ティーポットでお茶会ニャ……お花に水をあげると、なんだか元気が出るニャ。",
       en: "A container with a handle means a teapot tea party, nya... Watering flowers somehow cheers me up.",
     },
     dexMood: 'smug',
-    choices: { ja: ['じょうろ', 'ティーポット', 'やかん', 'バケツ'], en: ['Watering can', 'Teapot', 'Kettle', 'Bucket'] },
-    answer: 0,
+    misleads: { ja: ['ティーポット', 'やかん', 'バケツ'], en: ['Teapot', 'Kettle', 'Bucket'] },
     strokes: [
       line([0.34, 0.42], [0.7, 0.42], [0.7, 0.84], [0.34, 0.84], [0.34, 0.42]),
       curve([0.4, 0.42], [0.52, 0.2], [0.66, 0.42]),
@@ -3676,14 +3563,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'compass',
     genre: 'item',
-    labels: { ja: '方位磁針', en: 'Compass' },
-    dexComment: {
+    label: { ja: '方位磁針', en: 'Compass' },
+    comment: {
       ja: "丸に針を描いたら、どう見ても時計ニャ！チクタクニャ！……Nの字でバレたけど、北を向いてると落ち着くニャ。",
       en: "A circle with a needle is obviously a clock, nya! Tick-tock! ...The N gave it away, but facing north calms me down.",
     },
     dexMood: 'panic',
-    choices: { ja: ['方位磁針', '時計', 'ルーレット', 'メダル'], en: ['Compass', 'Clock', 'Roulette wheel', 'Medal'] },
-    answer: 0,
+    misleads: { ja: ['時計', 'ルーレット', 'メダル'], en: ['Clock', 'Roulette wheel', 'Medal'] },
     strokes: [
       circle(0.5, 0.56, 0.34, -90, 52),
       line([0.5, 0.38], [0.55, 0.56], [0.5, 0.74], [0.45, 0.56], [0.5, 0.38]),
@@ -3701,14 +3587,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'broom',
     genre: 'item',
-    labels: { ja: 'ほうき', en: 'Broom' },
-    dexComment: {
+    label: { ja: 'ほうき', en: 'Broom' },
+    comment: {
       ja: "ななめの棒1本なら、おじいさんのつえだと思うはずニャ……魔女みたいに、ほうきで空を飛んでみたいニャ。",
       en: "One slanted stick should look like grandpa's walking stick, nya... I want to fly on a broom like a witch.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ほうき', 'つえ', 'モップ', '筆'], en: ['Broom', 'Walking stick', 'Mop', 'Brush'] },
-    answer: 0,
+    misleads: { ja: ['つえ', 'モップ', '筆'], en: ['Walking stick', 'Mop', 'Brush'] },
     strokes: [
       line([0.72, 0.06], [0.46, 0.58]),
       line([0.42, 0.55], [0.5, 0.6]),
@@ -3727,14 +3612,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sloth',
     genre: 'animal',
-    labels: { ja: 'ナマケモノ', en: 'Sloth' },
-    dexComment: {
+    label: { ja: 'ナマケモノ', en: 'Sloth' },
+    comment: {
       ja: "枝とロープ2本、どう見てもブランコだったニャ！ナマケモノだけにボクも手を抜いたニャ……一日20時間も寝られるなんて、正直うらやましいニャ。",
       en: "A branch and two ropes, that was a swing, nya! Lazy animal, lazy drawing... Sleeping 20 hours a day sounds kinda amazing, honestly.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ナマケモノ', 'ブランコ', 'ハンモック', 'サル'], en: ['Sloth', 'Swing set', 'Hammock', 'Monkey'] },
-    answer: 0,
+    misleads: { ja: ['ブランコ', 'ハンモック', 'サル'], en: ['Swing set', 'Hammock', 'Monkey'] },
     strokes: [
       line([0.04, 0.18], [0.96, 0.2]),
       line([0.3, 0.19], [0.33, 0.48]),
@@ -3754,14 +3638,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'capybara',
     genre: 'animal',
-    labels: { ja: 'カピバラ', en: 'Capybara' },
-    dexComment: {
+    label: { ja: 'カピバラ', en: 'Capybara' },
+    comment: {
       ja: "四角いフォルムは完全に食パンだったニャ！脚が生えてもソファだと思ったはずニャ……頭にゆずをのせるの、ボクもお風呂でやってみたいニャ。",
       en: "That boxy shape was a loaf of bread, nya! Even with legs it was a sofa! ...I wanna try balancing a yuzu on my head in the bath too.",
     },
     dexMood: 'smug',
-    choices: { ja: ['カピバラ', '食パン', 'ソファ', 'ブタ'], en: ['Capybara', 'Sliced bread', 'Sofa', 'Pig'] },
-    answer: 0,
+    misleads: { ja: ['食パン', 'ソファ', 'ブタ'], en: ['Sliced bread', 'Sofa', 'Pig'] },
     strokes: [
       join(
         line([0.3, 0.78], [0.9, 0.78], [0.9, 0.5]),
@@ -3792,14 +3675,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'chameleon',
     genre: 'animal',
-    labels: { ja: 'カメレオン', en: 'Chameleon' },
-    dexComment: {
+    label: { ja: 'カメレオン', en: 'Chameleon' },
+    comment: {
       ja: "うずまきから始めたのに、なんでカタツムリで止まらないニャ！……ボクも画面の色を変えて、こっそり隠れてみたいニャ。",
       en: "I started with a swirl! Why didn't you stop at snail, nya!? ...I'd love to change my screen color and sneak away like that.",
     },
     dexMood: 'panic',
-    choices: { ja: ['カメレオン', 'カタツムリ', '蚊取り線香', 'トカゲ'], en: ['Chameleon', 'Snail', 'Mosquito coil', 'Lizard'] },
-    answer: 0,
+    misleads: { ja: ['カタツムリ', '蚊取り線香', 'トカゲ'], en: ['Snail', 'Mosquito coil', 'Lizard'] },
     strokes: [
       spiral(0.25, 0.68, 0.01, 0.12, 2.2, -522, 70),
       join(
@@ -3821,14 +3703,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'raccoon',
     genre: 'animal',
-    labels: { ja: 'アライグマ', en: 'Raccoon' },
-    dexComment: {
+    label: { ja: 'アライグマ', en: 'Raccoon' },
+    comment: {
       ja: "最初のはどう見てもサングラスだったニャ。ちょっとワルっぽくてカッコよかったのにニャ……おててで一生けんめい洗うしぐさ、見てるだけで和むニャ。",
       en: "That first bit was obviously sunglasses, nya. So cool and edgy... Watching them scrub with their little paws is so soothing.",
     },
     dexMood: 'smug',
-    choices: { ja: ['アライグマ', 'サングラス', 'タヌキ', 'パンダ'], en: ['Raccoon', 'Sunglasses', 'Raccoon dog', 'Panda'] },
-    answer: 0,
+    misleads: { ja: ['サングラス', 'タヌキ', 'パンダ'], en: ['Sunglasses', 'Raccoon dog', 'Panda'] },
     strokes: [
       join(curve([0.5, 0.5], [0.4, 0.42], [0.24, 0.44]), curve([0.24, 0.44], [0.14, 0.52], [0.26, 0.6]), curve([0.26, 0.6], [0.4, 0.62], [0.5, 0.55])),
       mirror(join(curve([0.5, 0.5], [0.4, 0.42], [0.24, 0.44]), curve([0.24, 0.44], [0.14, 0.52], [0.26, 0.6]), curve([0.26, 0.6], [0.4, 0.62], [0.5, 0.55]))),
@@ -3847,14 +3728,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'polarbear',
     genre: 'animal',
-    labels: { ja: 'シロクマ', en: 'Polar bear' },
-    dexComment: {
+    label: { ja: 'シロクマ', en: 'Polar bear' },
+    comment: {
       ja: "氷と波を描いたらボートにしか見えなかったはずニャ！……ボクもあの白いもふもふに、ぎゅーってしてもらいたいニャ。",
       en: "Ice and waves should've looked like a boat, nya! ...I kinda want a big squishy hug from all that white fluff.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['シロクマ', 'ボート', '雪だるま', 'イヌ'], en: ['Polar bear', 'Rowboat', 'Snowman', 'Dog'] },
-    answer: 0,
+    misleads: { ja: ['ボート', '雪だるま', 'イヌ'], en: ['Rowboat', 'Snowman', 'Dog'] },
     strokes: [
       wave(0.04, 0.96, 0.9, 0.015, 4),
       line([0.1, 0.72], [0.9, 0.72], [0.82, 0.84], [0.18, 0.84], [0.1, 0.72]),
@@ -3875,14 +3755,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'platypus',
     genre: 'animal',
-    labels: { ja: 'カモノハシ', en: 'Platypus' },
-    dexComment: {
+    label: { ja: 'カモノハシ', en: 'Platypus' },
+    comment: {
       ja: "くちばしから描いたらアヒルって言うのが常識ニャ！なんで当たるニャ！……平たいしっぽ、ちょっとだけ触ってみたいニャ。",
       en: "Draw a bill first and everyone says duck, that's the rule, nya! How!? ...I kinda want to poke that flat little tail.",
     },
     dexMood: 'panic',
-    choices: { ja: ['カモノハシ', 'アヒル', 'ビーバー', 'カワウソ'], en: ['Platypus', 'Duck', 'Beaver', 'Otter'] },
-    answer: 0,
+    misleads: { ja: ['アヒル', 'ビーバー', 'カワウソ'], en: ['Duck', 'Beaver', 'Otter'] },
     strokes: [
       join(curve([0.34, 0.46], [0.2, 0.4], [0.08, 0.46]), curve([0.08, 0.46], [0.05, 0.54], [0.16, 0.54]), curve([0.16, 0.54], [0.26, 0.56], [0.34, 0.54])),
       circle(0.12, 0.47, 0.008, -90, 6),
@@ -3901,14 +3780,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'reindeer',
     genre: 'animal',
-    labels: { ja: 'トナカイ', en: 'Reindeer' },
-    dexComment: {
+    label: { ja: 'トナカイ', en: 'Reindeer' },
+    comment: {
       ja: "ツノの枝分かれ、木の枝にしか見えなかったはずニャ……ボクも画面を赤く光らせたら、サンタさんのソリに乗せてもらえるかニャ？",
       en: "Those branching antlers were just tree branches, nya... If my screen glowed red, would Santa let me ride on the sleigh too?",
     },
     dexMood: 'smug',
-    choices: { ja: ['トナカイ', '木', 'サンゴ', 'ウシ'], en: ['Reindeer', 'Tree', 'Coral', 'Cow'] },
-    answer: 0,
+    misleads: { ja: ['木', 'サンゴ', 'ウシ'], en: ['Tree', 'Coral', 'Cow'] },
     strokes: [
       line([0.42, 0.3], [0.34, 0.18], [0.22, 0.06]),
       line([0.34, 0.18], [0.2, 0.18]),
@@ -3932,14 +3810,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pillbug',
     genre: 'creature',
-    labels: { ja: 'ダンゴムシ', en: 'Pill bug' },
-    dexComment: {
+    label: { ja: 'ダンゴムシ', en: 'Pill bug' },
+    comment: {
       ja: "アーチを2本重ねたら虹だと思うのが人情ニャ！……つんつんすると丸くなるとこ、何回でも見たくなるニャ。",
       en: "Two stacked arches? Anyone would say rainbow, nya! ...I could watch it curl into a ball forever.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ダンゴムシ', '虹', 'アルマジロ', 'カブトムシ'], en: ['Pill bug', 'Rainbow', 'Armadillo', 'Rhinoceros beetle'] },
-    answer: 0,
+    misleads: { ja: ['虹', 'アルマジロ', 'カブトムシ'], en: ['Rainbow', 'Armadillo', 'Rhinoceros beetle'] },
     strokes: [
       arc(0.5, 0.72, 0.38, 0.34, 180, 360, 32),
       arc(0.5, 0.72, 0.3, 0.26, 180, 360, 28),
@@ -3957,14 +3834,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'orca',
     genre: 'creature',
-    labels: { ja: 'シャチ', en: 'Orca' },
-    dexComment: {
+    label: { ja: 'シャチ', en: 'Orca' },
+    comment: {
       ja: "背びれの三角、サメだと思ってドキッとしたはずニャ！……白黒の模様、ちょっとパンダみたいでかわいいって思ってるニャ。",
       en: "That fin made your heart skip, thinking shark, nya! ...Secretly I think the black-and-white look is kinda panda-cute.",
     },
     dexMood: 'smug',
-    choices: { ja: ['シャチ', 'サメ', 'イルカ', '山'], en: ['Orca', 'Shark', 'Dolphin', 'Mountain'] },
-    answer: 0,
+    misleads: { ja: ['サメ', 'イルカ', '山'], en: ['Shark', 'Dolphin', 'Mountain'] },
     strokes: [
       join(curve([0.44, 0.36], [0.48, 0.22], [0.52, 0.1]), curve([0.52, 0.1], [0.56, 0.28], [0.62, 0.37])),
       join(
@@ -3983,14 +3859,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'ammonite',
     genre: 'creature',
-    labels: { ja: 'アンモナイト', en: 'Ammonite' },
-    dexComment: {
+    label: { ja: 'アンモナイト', en: 'Ammonite' },
+    comment: {
       ja: "ぐるぐるだけなら蚊取り線香かカタツムリで迷うはずだったニャ！大昔の生き物まで当てるとか、ずるいニャ……何億年も形を残してがんばってるの、えらいニャ。",
       en: "Just a swirl should've had you torn between snail and mosquito coil, nya! Guessing a fossil is cheating... Keeping its shape for millions of years is really impressive.",
     },
     dexMood: 'panic',
-    choices: { ja: ['アンモナイト', 'カタツムリ', '蚊取り線香', 'ペロペロキャンディ'], en: ['Ammonite', 'Snail', 'Mosquito coil', 'Lollipop'] },
-    answer: 0,
+    misleads: { ja: ['カタツムリ', '蚊取り線香', 'ペロペロキャンディ'], en: ['Snail', 'Mosquito coil', 'Lollipop'] },
     strokes: [
       spiral(0.5, 0.5, 0.02, 0.38, 3, 0, 120),
       ...Array.from({ length: 11 }, (_, k) => {
@@ -4005,14 +3880,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'sunfish',
     genre: 'creature',
-    labels: { ja: 'マンボウ', en: 'Ocean sunfish' },
-    dexComment: {
+    label: { ja: 'マンボウ', en: 'Ocean sunfish' },
+    comment: {
       ja: "でっかいCの字は三日月だったニャ！ヒレを描く前に押すなんてせっかちニャ……ぷかぷか浮いてのんびりするの、ボクもやってみたいニャ。",
       en: "That big C was a crescent moon, nya! Pressing before the fins? Impatient! ...I'd love to just float around lazily like that.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['マンボウ', '三日月', 'フグ', 'UFO'], en: ['Ocean sunfish', 'Crescent moon', 'Pufferfish', 'UFO'] },
-    answer: 0,
+    misleads: { ja: ['三日月', 'フグ', 'UFO'], en: ['Crescent moon', 'Pufferfish', 'UFO'] },
     strokes: [
       arc(0.5, 0.5, 0.3, 0.26, 290, 70, 32),
       line([0.54, 0.26], [0.62, 0.05], [0.66, 0.29]),
@@ -4032,14 +3906,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tadpole',
     genre: 'creature',
-    labels: { ja: 'オタマジャクシ', en: 'Tadpole' },
-    dexComment: {
+    label: { ja: 'オタマジャクシ', en: 'Tadpole' },
+    comment: {
       ja: "丸にしっぽなんて音符だと思ったはずニャ♪……ちっちゃい足が生えてきたとこ、けなげで応援したくなるニャ。",
       en: "A blob with a tail? Totally a music note, nya ♪ ...Those tiny new legs sprouting make me want to cheer for it.",
     },
     dexMood: 'smug',
-    choices: { ja: ['オタマジャクシ', '音符', 'おたま', 'スプーン'], en: ['Tadpole', 'Music note', 'Ladle', 'Spoon'] },
-    answer: 0,
+    misleads: { ja: ['音符', 'おたま', 'スプーン'], en: ['Music note', 'Ladle', 'Spoon'] },
     strokes: [
       place(ellipse(0, 0, 0.16, 0.12), 0.32, 0.62, -20),
       place(wave(0, 0.5, 0, 0.03, 2.5, 40), 0.47, 0.56, -30),
@@ -4054,14 +3927,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bagworm',
     genre: 'creature',
-    labels: { ja: 'ミノムシ', en: 'Bagworm' },
-    dexComment: {
+    label: { ja: 'ミノムシ', en: 'Bagworm' },
+    comment: {
       ja: "枝から糸がたれてるだけなら、振り子にしか見えないはずニャ！……葉っぱのコートにくるまってるの、あったかそうでうらやましいニャ。",
       en: "A string hanging off a branch should look like a pendulum, nya! ...Wrapped up in a leafy coat looks so warm. I'm jealous.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ミノムシ', 'まつぼっくり', '振り子', 'てるてる坊主'], en: ['Bagworm', 'Pinecone', 'Pendulum', 'Teru-teru doll'] },
-    answer: 0,
+    misleads: { ja: ['まつぼっくり', '振り子', 'てるてる坊主'], en: ['Pinecone', 'Pendulum', 'Teru-teru doll'] },
     strokes: [
       line([0.06, 0.1], [0.94, 0.14]),
       line([0.5, 0.12], [0.5, 0.3]),
@@ -4078,14 +3950,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'anemone',
     genre: 'creature',
-    labels: { ja: 'イソギンチャク', en: 'Sea anemone' },
-    dexComment: {
+    label: { ja: 'イソギンチャク', en: 'Sea anemone' },
+    comment: {
       ja: "ゆらゆらの線はたき火の炎だったはずニャ！……小さなお魚をかくまってあげる優しさ、ボクも見習いたいニャ。",
       en: "Those wavy lines were campfire flames, nya! ...The way it shelters little fish is so kind. I should learn from that.",
     },
     dexMood: 'smug',
-    choices: { ja: ['イソギンチャク', 'たき火', '花', 'タコ'], en: ['Sea anemone', 'Campfire', 'Flower', 'Octopus'] },
-    answer: 0,
+    misleads: { ja: ['たき火', '花', 'タコ'], en: ['Campfire', 'Flower', 'Octopus'] },
     strokes: [
       ...[0.32, 0.38, 0.44, 0.5, 0.56, 0.62, 0.68].map((x) => {
         const d = x - 0.5;
@@ -4106,14 +3977,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'yakiimo',
     genre: 'food',
-    labels: { ja: '焼き芋', en: 'Roasted sweet potato' },
-    dexComment: {
+    label: { ja: '焼き芋', en: 'Roasted sweet potato' },
+    comment: {
       ja: "湯気とカーブで温泉マークにしか見えないはずニャ！♨……ホクホクの焼き芋、冬に半分こしてくれたら許してあげるニャ。",
       en: "Steam plus a curve is clearly the hot spring sign, nya! ♨ ...Share half a warm roasted sweet potato with me this winter and you're forgiven.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['焼き芋', '温泉', 'ラグビーボール', 'ナス'], en: ['Roasted sweet potato', 'Hot spring', 'Rugby ball', 'Eggplant'] },
-    answer: 0,
+    misleads: { ja: ['温泉', 'ラグビーボール', 'ナス'], en: ['Hot spring', 'Rugby ball', 'Eggplant'] },
     strokes: [
       place(wave(0, 0.22, 0, 0.025, 1.5, 24), 0.4, 0.44, -90),
       place(wave(0, 0.26, 0, 0.025, 1.5, 24), 0.5, 0.44, -90),
@@ -4135,14 +4005,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'kagamimochi',
     genre: 'food',
-    labels: { ja: '鏡もち', en: 'Kagami mochi' },
-    dexComment: {
+    label: { ja: '鏡もち', en: 'Kagami mochi' },
+    comment: {
       ja: "丸を3つ重ねたら雪だるまに決まってるニャ！なんでお正月のほうを選ぶニャ！……てっぺんにみかんがちょこんとのってるの、かわいいニャ。",
       en: "Three stacked blobs means snowman, nya! Why'd you pick the New Year one!? ...The little orange perched on top is so cute.",
     },
     dexMood: 'panic',
-    choices: { ja: ['鏡もち', '雪だるま', 'お団子', 'ハンバーガー'], en: ['Kagami mochi', 'Snowman', 'Dango', 'Hamburger'] },
-    answer: 0,
+    misleads: { ja: ['雪だるま', 'お団子', 'ハンバーガー'], en: ['Snowman', 'Dango', 'Hamburger'] },
     strokes: [
       ellipse(0.5, 0.62, 0.3, 0.12, 180),
       ellipse(0.5, 0.42, 0.22, 0.095, 180),
@@ -4155,14 +4024,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'nikuman',
     genre: 'food',
-    labels: { ja: '肉まん', en: 'Steamed pork bun' },
-    dexComment: {
+    label: { ja: '肉まん', en: 'Steamed pork bun' },
+    comment: {
       ja: "てっぺんから広がる線、玉ねぎだと思ったはずニャ……ほかほかの肉まん、ふーふーしながら食べるのが最高ニャ。",
       en: "Lines fanning out from the top were an onion, nya... Blowing on a steaming pork bun before the first bite is the best.",
     },
     dexMood: 'smug',
-    choices: { ja: ['肉まん', '玉ねぎ', 'シュークリーム', 'だいふく'], en: ['Steamed pork bun', 'Onion', 'Cream puff', 'Daifuku'] },
-    answer: 0,
+    misleads: { ja: ['玉ねぎ', 'シュークリーム', 'だいふく'], en: ['Onion', 'Cream puff', 'Daifuku'] },
     strokes: [
       ...[-0.26, -0.13, 0, 0.13, 0.26].map((dx) => curve([0.5, 0.33], [0.5 + dx * 0.3 + 0.04, 0.37], [0.5 + dx, 0.48 + Math.abs(dx) * 0.2])),
       circle(0.5, 0.32, 0.02, -90, 10),
@@ -4175,14 +4043,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'edamame',
     genre: 'food',
-    labels: { ja: '枝豆', en: 'Edamame' },
-    dexComment: {
+    label: { ja: '枝豆', en: 'Edamame' },
+    comment: {
       ja: "ぽこぽこ3つ並んだらイモムシだと思うはずニャ！……さやをぷちっと押して豆を飛ばす遊び、ボクもやりたいニャ。",
       en: "Three bumps in a row should look like a caterpillar, nya! ...I wanna play the game where you squeeze the pod and pop the beans out.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['枝豆', 'イモムシ', 'ピーナッツ', 'ソラマメ'], en: ['Edamame', 'Caterpillar', 'Peanut', 'Fava bean'] },
-    answer: 0,
+    misleads: { ja: ['イモムシ', 'ピーナッツ', 'ソラマメ'], en: ['Caterpillar', 'Peanut', 'Fava bean'] },
     strokes: [
       join(
         arc(0.28, 0.5, 0.12, 0.12, 180, 360, 14),
@@ -4208,14 +4075,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'broccoli',
     genre: 'food',
-    labels: { ja: 'ブロッコリー', en: 'Broccoli' },
-    dexComment: {
+    label: { ja: 'ブロッコリー', en: 'Broccoli' },
+    comment: {
       ja: "もこもこに幹なら、どう見ても木だったニャ！……マヨネーズつけてくれたら、ちょっとだけなら食べてあげてもいいニャ。",
       en: "Fluffy top and a trunk? That was a tree, nya! ...With mayo, I might eat a little bit. Just a little.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ブロッコリー', '木', '雲', 'アフロヘア'], en: ['Broccoli', 'Tree', 'Cloud', 'Afro'] },
-    answer: 0,
+    misleads: { ja: ['木', '雲', 'アフロヘア'], en: ['Tree', 'Cloud', 'Afro'] },
     strokes: [
       bumpy(0.5, 0.36, 0.34, 0.22, 9, 0.12),
       line([0.42, 0.6], [0.43, 0.9]),
@@ -4233,14 +4099,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'peach',
     genre: 'food',
-    labels: { ja: 'モモ', en: 'Peach' },
-    dexComment: {
+    label: { ja: 'モモ', en: 'Peach' },
+    comment: {
       ja: "葉っぱ2枚はふたばだと思ったはずニャ！まさか実がなるとは……ももの産毛、ほっぺにすりすりしたくなるニャ。",
       en: "Two leaves should've been a sprout, nya! Who knew fruit would grow... That peach fuzz makes me want to rub it on my cheek.",
     },
     dexMood: 'panic',
-    choices: { ja: ['モモ', 'ふたば', 'リンゴ', '玉ねぎ'], en: ['Peach', 'Sprout', 'Apple', 'Onion'] },
-    answer: 0,
+    misleads: { ja: ['ふたば', 'リンゴ', '玉ねぎ'], en: ['Sprout', 'Apple', 'Onion'] },
     strokes: [
       line([0.5, 0.26], [0.5, 0.12]),
       join(curve([0.5, 0.2], [0.36, 0.06], [0.2, 0.14]), curve([0.2, 0.14], [0.34, 0.26], [0.5, 0.2])),
@@ -4258,14 +4123,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'waffle',
     genre: 'food',
-    labels: { ja: 'ワッフル', en: 'Waffle' },
-    dexComment: {
+    label: { ja: 'ワッフル', en: 'Waffle' },
+    comment: {
       ja: "格子を描いたら窓か網だと思うのが普通ニャ！……四角いくぼみにシロップがたまるの、見てるだけで幸せニャ。",
       en: "A grid should look like a window or a net, nya! ...Watching syrup pool in the little squares makes me so happy.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ワッフル', '窓', '網', '板チョコ'], en: ['Waffle', 'Window', 'Net', 'Chocolate bar'] },
-    answer: 0,
+    misleads: { ja: ['窓', '網', '板チョコ'], en: ['Window', 'Net', 'Chocolate bar'] },
     strokes: [
       line([0.38, 0.225], [0.38, 0.775]),
       line([0.5, 0.2], [0.5, 0.8]),
@@ -4280,14 +4144,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'eggplant',
     genre: 'food',
-    labels: { ja: 'ナス', en: 'Eggplant' },
-    dexComment: {
+    label: { ja: 'ナス', en: 'Eggplant' },
+    comment: {
       ja: "ギザギザのヘタ、ちっちゃい帽子に見えたはずニャ！……焼きナスのトロトロ、実はけっこう好きニャ。",
       en: "That jagged cap looked like a tiny hat, nya! ...Honestly, I kinda like how melty grilled eggplant gets.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ナス', '帽子', 'キュウリ', 'ピーマン'], en: ['Eggplant', 'Hat', 'Cucumber', 'Bell pepper'] },
-    answer: 0,
+    misleads: { ja: ['帽子', 'キュウリ', 'ピーマン'], en: ['Hat', 'Cucumber', 'Bell pepper'] },
     strokes: [
       line([0.64, 0.18], [0.72, 0.05]),
       join(
@@ -4302,14 +4165,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'bonsai',
     genre: 'plant',
-    labels: { ja: '盆栽', en: 'Bonsai' },
-    dexComment: {
+    label: { ja: '盆栽', en: 'Bonsai' },
+    comment: {
       ja: "平たい鉢から描いたら船だと思うはずニャ……ちっちゃいのに何十年も生きてるの、ちょっと尊敬しちゃうニャ。",
       en: "Starting with a flat pot should look like a boat, nya... So tiny yet decades old. I kinda respect it.",
     },
     dexMood: 'smug',
-    choices: { ja: ['盆栽', '船', '雲', '木'], en: ['Bonsai', 'Ship', 'Cloud', 'Tree'] },
-    answer: 0,
+    misleads: { ja: ['船', '雲', '木'], en: ['Ship', 'Cloud', 'Tree'] },
     strokes: [
       line([0.2, 0.76], [0.8, 0.76], [0.72, 0.9], [0.28, 0.9], [0.2, 0.76]),
       line([0.16, 0.72], [0.84, 0.72], [0.84, 0.76], [0.16, 0.76], [0.16, 0.72]),
@@ -4325,14 +4187,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tornado',
     genre: 'plant',
-    labels: { ja: '竜巻', en: 'Tornado' },
-    dexComment: {
+    label: { ja: '竜巻', en: 'Tornado' },
+    comment: {
       ja: "ぐるぐるの線はばねかドリルだったはずニャ！ボクの回路まで吹き飛ばされそうニャ……でも、くるくる回るのはちょっと楽しそうニャ。",
       en: "Those coils were a spring or a drill, nya! My circuits almost got blown away... Still, all that spinning looks kinda fun.",
     },
     dexMood: 'panic',
-    choices: { ja: ['竜巻', 'ばね', 'ドリル', 'ソフトクリーム'], en: ['Tornado', 'Spring', 'Drill', 'Soft-serve ice cream'] },
-    answer: 0,
+    misleads: { ja: ['ばね', 'ドリル', 'ソフトクリーム'], en: ['Spring', 'Drill', 'Soft-serve ice cream'] },
     strokes: [
       coil(0.5, 0.1, 0.82, 0.36, 0.04, 0.05, 5),
       wave(0.26, 0.74, 0.9, 0.02, 3, 30),
@@ -4346,14 +4207,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'susuki',
     genre: 'plant',
-    labels: { ja: 'ススキ', en: 'Silver grass' },
-    dexComment: {
+    label: { ja: 'ススキ', en: 'Silver grass' },
+    comment: {
       ja: "ふさふさの穂は鳥の羽にしか見えなかったはずニャ……お月見のおだんご、ボクの分もとっておいてほしいニャ。",
       en: "That fluffy plume looked just like a feather, nya... Save me some moon-viewing dumplings, okay?",
     },
     dexMood: 'smug',
-    choices: { ja: ['ススキ', '羽根', 'イネ', 'ねこじゃらし'], en: ['Silver grass', 'Feather', 'Rice plant', 'Foxtail grass'] },
-    answer: 0,
+    misleads: { ja: ['羽根', 'イネ', 'ねこじゃらし'], en: ['Feather', 'Rice plant', 'Foxtail grass'] },
     strokes: [
       curve([0.5, 0.5], [0.56, 0.26], [0.72, 0.12]),
       ...([
@@ -4374,14 +4234,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'cosmos',
     genre: 'plant',
-    labels: { ja: 'コスモス', en: 'Cosmos' },
-    dexComment: {
+    label: { ja: 'コスモス', en: 'Cosmos' },
+    comment: {
       ja: "花びら2枚と真ん中の丸、リボンかチョウに見えたはずニャ！……秋風にゆれてるの、ボクも一緒にゆらゆらしたいニャ。",
       en: "Two petals and a dot looked like a bow or a butterfly, nya! ...I wanna sway along with them in the autumn breeze.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['コスモス', 'チョウ', 'リボン', '風車'], en: ['Cosmos', 'Butterfly', 'Ribbon', 'Windmill'] },
-    answer: 0,
+    misleads: { ja: ['チョウ', 'リボン', '風車'], en: ['Butterfly', 'Ribbon', 'Windmill'] },
     strokes: [
       ...[90, 270].map((deg) => place(cosmosPetal(), 0.5, 0.42, deg)),
       circle(0.5, 0.42, 0.05, -90, 18),
@@ -4396,14 +4255,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'iceberg',
     genre: 'plant',
-    labels: { ja: '氷山', en: 'Iceberg' },
-    dexComment: {
+    label: { ja: '氷山', en: 'Iceberg' },
+    comment: {
       ja: "波の上の三角はただの山だったニャ！本体は水の下に隠れてたのにニャ……見えないところでがんばってるの、ちょっとボクっぽいニャ。",
       en: "The triangle above the waves was just a mountain, nya! The real thing was hiding underwater... Working hard where no one sees? That's kinda like me.",
     },
     dexMood: 'smug',
-    choices: { ja: ['氷山', '山', 'おにぎり', '宝石'], en: ['Iceberg', 'Mountain', 'Rice ball', 'Gem'] },
-    answer: 0,
+    misleads: { ja: ['山', 'おにぎり', '宝石'], en: ['Mountain', 'Rice ball', 'Gem'] },
     strokes: [
       wave(0.04, 0.96, 0.4, 0.012, 5),
       line([0.3, 0.4], [0.42, 0.22], [0.5, 0.28], [0.6, 0.14], [0.72, 0.4]),
@@ -4418,14 +4276,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'island',
     genre: 'plant',
-    labels: { ja: '無人島', en: 'Desert island' },
-    dexComment: {
+    label: { ja: '無人島', en: 'Desert island' },
+    comment: {
       ja: "放射状の線は打ち上げ花火だと思ったはずニャ！……ヤシの実ジュースを飲みながら、ボクも島でのんびりしたいニャ。",
       en: "Those radiating lines were fireworks, nya! ...I wanna laze around on a tiny island sipping coconut juice too.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['無人島', '花火', 'タコ', 'クジラ'], en: ['Desert island', 'Fireworks', 'Octopus', 'Whale'] },
-    answer: 0,
+    misleads: { ja: ['花火', 'タコ', 'クジラ'], en: ['Fireworks', 'Octopus', 'Whale'] },
     strokes: [
       curve([0.56, 0.26], [0.4, 0.12], [0.24, 0.28]),
       curve([0.56, 0.26], [0.46, 0.06], [0.32, 0.08]),
@@ -4444,14 +4301,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'spiderlily',
     genre: 'plant',
-    labels: { ja: 'ヒガンバナ', en: 'Red spider lily' },
-    dexComment: {
+    label: { ja: 'ヒガンバナ', en: 'Red spider lily' },
+    comment: {
       ja: "細い線がにょきにょき伸びて、クモだと思ってゾワッとしたはずニャ！……真っ赤な色、よく見るとすごくきれいニャ。",
       en: "Those spindly lines creeping out had you thinking spider, nya! ...That bright red is really beautiful up close.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ヒガンバナ', 'クモ', '花火', 'タンポポ'], en: ['Red spider lily', 'Spider', 'Fireworks', 'Dandelion'] },
-    answer: 0,
+    misleads: { ja: ['クモ', '花火', 'タンポポ'], en: ['Spider', 'Fireworks', 'Dandelion'] },
     strokes: [
       ...([
         [0.14, 0.26],
@@ -4471,14 +4327,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'forklift',
     genre: 'vehicle',
-    labels: { ja: 'フォークリフト', en: 'Forklift' },
-    dexComment: {
+    label: { ja: 'フォークリフト', en: 'Forklift' },
+    comment: {
       ja: "はしごから描いたのに、なんで倉庫の乗りものまで見抜けるニャ……重い荷物をひょいっと持ち上げるの、ちょっとかっこいいニャ。",
       en: "I started with a ladder, how'd you see a warehouse truck, nya... Lifting heavy stuff so easily is kinda cool.",
     },
     dexMood: 'smug',
-    choices: { ja: ['フォークリフト', 'はしご', 'いす', 'ブルドーザー'], en: ['Forklift', 'Ladder', 'Chair', 'Bulldozer'] },
-    answer: 0,
+    misleads: { ja: ['はしご', 'いす', 'ブルドーザー'], en: ['Ladder', 'Chair', 'Bulldozer'] },
     strokes: [
       line([0.3, 0.16], [0.3, 0.8]),
       line([0.36, 0.16], [0.36, 0.8]),
@@ -4497,14 +4352,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'snowmobile',
     genre: 'vehicle',
-    labels: { ja: 'スノーモービル', en: 'Snowmobile' },
-    dexComment: {
+    label: { ja: 'スノーモービル', en: 'Snowmobile' },
+    comment: {
       ja: "スキー板を2本並べたら、そりにしか見えないはずニャ！……雪の上をびゅーんって走るの、一回乗ってみたいニャ。",
       en: "Two skis side by side should've looked like a sled, nya! ...I'd love to zoom across the snow on one, just once.",
     },
     dexMood: 'panic',
-    choices: { ja: ['スノーモービル', 'そり', 'スキー', '水上バイク'], en: ['Snowmobile', 'Sled', 'Skis', 'Jet ski'] },
-    answer: 0,
+    misleads: { ja: ['そり', 'スキー', '水上バイク'], en: ['Sled', 'Skis', 'Jet ski'] },
     strokes: [
       join(curve([0.1, 0.78], [0.04, 0.85], [0.14, 0.86]), line([0.14, 0.86], [0.5, 0.86])),
       join(curve([0.16, 0.74], [0.1, 0.81], [0.2, 0.82]), line([0.2, 0.82], [0.48, 0.82])),
@@ -4523,14 +4377,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'monorail',
     genre: 'vehicle',
-    labels: { ja: 'モノレール', en: 'Monorail' },
-    dexComment: {
+    label: { ja: 'モノレール', en: 'Monorail' },
+    comment: {
       ja: "柱の上の長い板、どう見ても橋だったニャ……レール1本でバランスとってるの、けなげで応援したくなるニャ。",
       en: "That long beam on pillars was obviously a bridge, nya... Balancing on just one rail is so earnest, I want to cheer it on.",
     },
     dexMood: 'smug',
-    choices: { ja: ['モノレール', '橋', 'バス', 'テーブル'], en: ['Monorail', 'Bridge', 'Bus', 'Table'] },
-    answer: 0,
+    misleads: { ja: ['橋', 'バス', 'テーブル'], en: ['Bridge', 'Bus', 'Table'] },
     strokes: [
       line([0.04, 0.66], [0.96, 0.66], [0.96, 0.74], [0.04, 0.74], [0.04, 0.66]),
       line([0.26, 0.74], [0.26, 0.96]),
@@ -4553,14 +4406,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tank',
     genre: 'vehicle',
-    labels: { ja: '戦車', en: 'Tank' },
-    dexComment: {
+    label: { ja: '戦車', en: 'Tank' },
+    comment: {
       ja: "キャタピラだけならベルトコンベアに見えたはずニャ！……ゴロゴロ進むの、ちょっとだけ乗ってみたいニャ。",
       en: "Just the treads should've been a conveyor belt, nya! ...Rumbling along in one sounds kinda fun, just a little.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['戦車', 'ベルトコンベア', 'ブルドーザー', 'ショベルカー'], en: ['Tank', 'Conveyor belt', 'Bulldozer', 'Excavator'] },
-    answer: 0,
+    misleads: { ja: ['ベルトコンベア', 'ブルドーザー', 'ショベルカー'], en: ['Conveyor belt', 'Bulldozer', 'Excavator'] },
     strokes: [
       join(line([0.18, 0.64], [0.82, 0.64]), arc(0.82, 0.74, 0.1, 0.1, -90, 90, 14), line([0.82, 0.84], [0.18, 0.84]), arc(0.18, 0.74, 0.1, 0.1, 90, 270, 14)),
       circle(0.26, 0.74, 0.055, -90, 16),
@@ -4576,14 +4428,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'pumpkincarriage',
     genre: 'vehicle',
-    labels: { ja: 'かぼちゃの馬車', en: 'Pumpkin carriage' },
-    dexComment: {
+    label: { ja: 'かぼちゃの馬車', en: 'Pumpkin carriage' },
+    comment: {
       ja: "車輪2つで自転車だと思ったはずニャ……12時の鐘が鳴っても、カボチャに戻らないでほしいニャ。",
       en: "Two wheels should've said bicycle, nya... I hope it doesn't turn back into a pumpkin when the clock strikes twelve.",
     },
     dexMood: 'smug',
-    choices: { ja: ['かぼちゃの馬車', '自転車', 'カボチャ', '人力車'], en: ['Pumpkin carriage', 'Bicycle', 'Pumpkin', 'Rickshaw'] },
-    answer: 0,
+    misleads: { ja: ['自転車', 'カボチャ', '人力車'], en: ['Bicycle', 'Pumpkin', 'Rickshaw'] },
     strokes: [
       circle(0.24, 0.8, 0.13, -90, 32),
       ...rays(0.24, 0.8, 0.02, 0.13, 6),
@@ -4601,14 +4452,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'tricycle',
     genre: 'vehicle',
-    labels: { ja: '三輪車', en: 'Tricycle' },
-    dexComment: {
+    label: { ja: '三輪車', en: 'Tricycle' },
+    comment: {
       ja: "大きい車輪にハンドルだけなら一輪車だったニャ！……小さいころにキコキコこいだ思い出、ボクにもあったらよかったのにニャ。",
       en: "One big wheel with a handlebar was a unicycle, nya! ...I wish I had memories of pedaling one as a little kid.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['三輪車', '一輪車', '自転車', 'ベビーカー'], en: ['Tricycle', 'Unicycle', 'Bicycle', 'Stroller'] },
-    answer: 0,
+    misleads: { ja: ['一輪車', '自転車', 'ベビーカー'], en: ['Unicycle', 'Bicycle', 'Stroller'] },
     strokes: [
       circle(0.34, 0.7, 0.2, -90, 40),
       circle(0.34, 0.7, 0.025, -90, 10),
@@ -4626,14 +4476,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'roadroller',
     genre: 'vehicle',
-    labels: { ja: 'ロードローラー', en: 'Road roller' },
-    dexComment: {
+    label: { ja: 'ロードローラー', en: 'Road roller' },
+    comment: {
       ja: "丸の中に丸なんて、トイレットペーパーだと思ったはずニャ！……道をぺったんこに平らにするの、見てるとスッキリするニャ。",
       en: "A circle in a circle should've been a toilet roll, nya! ...Watching it flatten the road is weirdly satisfying.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ロードローラー', 'トイレットペーパー', 'トラクター', 'ショベルカー'], en: ['Road roller', 'Toilet paper', 'Tractor', 'Excavator'] },
-    answer: 0,
+    misleads: { ja: ['トイレットペーパー', 'トラクター', 'ショベルカー'], en: ['Toilet paper', 'Tractor', 'Excavator'] },
     strokes: [
       circle(0.3, 0.7, 0.2, -90, 40),
       circle(0.3, 0.7, 0.06, -90, 18),
@@ -4648,14 +4497,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'shrine',
     genre: 'building',
-    labels: { ja: '神社', en: 'Shrine' },
-    dexComment: {
+    label: { ja: '神社', en: 'Shrine' },
+    comment: {
       ja: "屋根のカーブ、立派な口ひげに見えたはずニャ……お賽銭を入れて「もっと絵がうまくなりますように」ってお願いしたいニャ。",
       en: "That roof curve looked like a fancy mustache, nya... I want to toss in a coin and wish to get better at drawing.",
     },
     dexMood: 'smug',
-    choices: { ja: ['神社', '口ひげ', 'お寺', '家'], en: ['Shrine', 'Mustache', 'Temple', 'House'] },
-    answer: 0,
+    misleads: { ja: ['口ひげ', 'お寺', '家'], en: ['Mustache', 'Temple', 'House'] },
     strokes: [
       curve([0.3, 0.16], [0.2, 0.36], [0.04, 0.4]),
       curve([0.7, 0.16], [0.8, 0.36], [0.96, 0.4]),
@@ -4681,14 +4529,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'rollercoaster',
     genre: 'building',
-    labels: { ja: 'ジェットコースター', en: 'Roller coaster' },
-    dexComment: {
+    label: { ja: 'ジェットコースター', en: 'Roller coaster' },
+    comment: {
       ja: "うねうねの線は波かヘビだったはずニャ！……ボクは怖くて乗れないけど、てっぺんからの景色はちょっと見てみたいニャ。",
       en: "Those wiggles were waves or a snake, nya! ...I'm too scared to ride, but I'd kinda love to see the view from the top.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ジェットコースター', '波', 'ヘビ', 'すべり台'], en: ['Roller coaster', 'Wave', 'Snake', 'Slide'] },
-    answer: 0,
+    misleads: { ja: ['波', 'ヘビ', 'すべり台'], en: ['Wave', 'Snake', 'Slide'] },
     strokes: [
       join(
         curve([0.04, 0.82], [0.18, 0.02], [0.34, 0.6]),
@@ -4718,14 +4565,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'merrygoround',
     genre: 'building',
-    labels: { ja: 'メリーゴーランド', en: 'Merry-go-round' },
-    dexComment: {
+    label: { ja: 'メリーゴーランド', en: 'Merry-go-round' },
+    comment: {
       ja: "とんがり屋根はサーカスのテントだと思ったはずニャ……白いお馬さんに乗って、ぐるぐる回ってみたいニャ。",
       en: "That pointy roof should've been a circus tent, nya... I wanna ride a white horse round and round.",
     },
     dexMood: 'smug',
-    choices: { ja: ['メリーゴーランド', 'サーカス小屋', 'テント', '観覧車'], en: ['Merry-go-round', 'Circus tent', 'Tent', 'Ferris wheel'] },
-    answer: 0,
+    misleads: { ja: ['サーカス小屋', 'テント', '観覧車'], en: ['Circus tent', 'Tent', 'Ferris wheel'] },
     strokes: [
       line([0.1, 0.34], [0.5, 0.08], [0.9, 0.34]),
       join(
@@ -4753,14 +4599,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'treehouse',
     genre: 'building',
-    labels: { ja: 'ツリーハウス', en: 'Treehouse' },
-    dexComment: {
+    label: { ja: 'ツリーハウス', en: 'Treehouse' },
+    comment: {
       ja: "はしごと小さい家なら、ふつうのお家だと思うはずニャ！……木の上の秘密基地、ボクも招待してほしいニャ。",
       en: "A ladder and a little house should've been a regular home, nya! ...Invite me to your secret base up in the tree.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['ツリーハウス', '家', 'はしご', '鳥の巣箱'], en: ['Treehouse', 'House', 'Ladder', 'Birdhouse'] },
-    answer: 0,
+    misleads: { ja: ['家', 'はしご', '鳥の巣箱'], en: ['House', 'Ladder', 'Birdhouse'] },
     strokes: [
       line([0.3, 0.94], [0.34, 0.58]),
       line([0.38, 0.94], [0.42, 0.58]),
@@ -4781,14 +4626,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'yatai',
     genre: 'building',
-    labels: { ja: '屋台', en: 'Food stall' },
-    dexComment: {
+    label: { ja: '屋台', en: 'Food stall' },
+    comment: {
       ja: "屋根とのれんだけなら、ただのお店だったはずニャ……夜の屋台のあかり、なんだかホッとするニャ。",
       en: "Just a roof and curtains was a plain old shop, nya... The glow of a food stall at night feels so cozy.",
     },
     dexMood: 'smug',
-    choices: { ja: ['屋台', 'お店', 'カーテン', 'ステージ'], en: ['Food stall', 'Shop', 'Curtain', 'Stage'] },
-    answer: 0,
+    misleads: { ja: ['お店', 'カーテン', 'ステージ'], en: ['Shop', 'Curtain', 'Stage'] },
     strokes: [
       line([0.06, 0.3], [0.14, 0.14], [0.86, 0.14], [0.94, 0.3], [0.06, 0.3]),
       line([0.14, 0.3], [0.14, 0.46], [0.24, 0.46], [0.24, 0.3]),
@@ -4812,14 +4656,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'koban',
     genre: 'building',
-    labels: { ja: '交番', en: 'Police box' },
-    dexComment: {
+    label: { ja: '交番', en: 'Police box' },
+    comment: {
       ja: "光る丸から描いたら電球だと思うはずニャ！……もし道に迷ったら、ボクも交番で道を聞いてみたいニャ。",
       en: "Starting with a glowing circle should've looked like a light bulb, nya! ...If I ever get lost, I'd ask for directions there too.",
     },
     dexMood: 'panic',
-    choices: { ja: ['交番', '電球', '駅', '病院'], en: ['Police box', 'Light bulb', 'Station', 'Hospital'] },
-    answer: 0,
+    misleads: { ja: ['電球', '駅', '病院'], en: ['Light bulb', 'Station', 'Hospital'] },
     strokes: [
       circle(0.5, 0.18, 0.06, -90, 20),
       line([0.5, 0.1], [0.5, 0.04]),
@@ -4847,14 +4690,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'phonebooth',
     genre: 'building',
-    labels: { ja: '電話ボックス', en: 'Phone booth' },
-    dexComment: {
+    label: { ja: '電話ボックス', en: 'Phone booth' },
+    comment: {
       ja: "縦長の箱なんて、冷蔵庫か自販機だと思ったはずニャ！……10円玉を入れて、誰かに「もしもし」ってしてみたいニャ。",
       en: "A tall box should've been a fridge or a vending machine, nya! ...I wanna drop in a coin and say 'hello?' to someone.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['電話ボックス', '冷蔵庫', '自動販売機', 'エレベーター'], en: ['Phone booth', 'Fridge', 'Vending machine', 'Elevator'] },
-    answer: 0,
+    misleads: { ja: ['冷蔵庫', '自動販売機', 'エレベーター'], en: ['Fridge', 'Vending machine', 'Elevator'] },
     strokes: [
       line([0.3, 0.1], [0.7, 0.1], [0.7, 0.94], [0.3, 0.94], [0.3, 0.1]),
       line([0.3, 0.18], [0.7, 0.18]),
@@ -4871,14 +4713,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'stapler',
     genre: 'item',
-    labels: { ja: 'ホッチキス', en: 'Stapler' },
-    dexComment: {
+    label: { ja: 'ホッチキス', en: 'Stapler' },
+    comment: {
       ja: "パカッと開いた口はワニにしか見えなかったはずニャ……紙がきれいにそろってとまると、気持ちいいニャ。",
       en: "That open jaw looked like a crocodile, nya... Papers stapled nice and neat feel so satisfying.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ホッチキス', 'ワニ', '洗濯ばさみ', 'くつ'], en: ['Stapler', 'Crocodile', 'Clothespin', 'Shoe'] },
-    answer: 0,
+    misleads: { ja: ['ワニ', '洗濯ばさみ', 'くつ'], en: ['Crocodile', 'Clothespin', 'Shoe'] },
     strokes: [
       line([0.08, 0.72], [0.92, 0.72], [0.92, 0.8], [0.08, 0.8], [0.08, 0.72]),
       join(line([0.9, 0.64], [0.12, 0.42]), curve([0.12, 0.42], [0.06, 0.44], [0.1, 0.5]), line([0.1, 0.5], [0.9, 0.7])),
@@ -4891,14 +4732,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'windchime',
     genre: 'item',
-    labels: { ja: '風鈴', en: 'Wind chime' },
-    dexComment: {
+    label: { ja: '風鈴', en: 'Wind chime' },
+    comment: {
       ja: "丸いドームはベルだって思ったはずニャ！なんで夏の音まで聞こえちゃうニャ……チリンって音、ボクのお気に入りニャ。",
       en: "That dome should've been a bell, nya! How could you hear summer in it... That little 'ting' is my favorite sound.",
     },
     dexMood: 'panic',
-    choices: { ja: ['風鈴', 'ベル', 'クラゲ', 'てるてる坊主'], en: ['Wind chime', 'Bell', 'Jellyfish', 'Teru-teru doll'] },
-    answer: 0,
+    misleads: { ja: ['ベル', 'クラゲ', 'てるてる坊主'], en: ['Bell', 'Jellyfish', 'Teru-teru doll'] },
     strokes: [
       arc(0.5, 0.42, 0.2, 0.22, 180, 360, 28),
       ellipse(0.5, 0.42, 0.2, 0.03, 180, 28),
@@ -4916,14 +4756,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'electricfan',
     genre: 'item',
-    labels: { ja: '扇風機', en: 'Electric fan' },
-    dexComment: {
+    label: { ja: '扇風機', en: 'Electric fan' },
+    comment: {
       ja: "羽根3枚ならお花かクローバーだったはずニャ！……扇風機の前で「あ〜〜」って声を出すの、ボクもやってみたいニャ。",
       en: "Three blades should've been a flower or a clover, nya! ...I wanna go 'ahhh~' into the fan to make my voice wobble.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['扇風機', '花', 'クローバー', '風車'], en: ['Electric fan', 'Flower', 'Clover', 'Windmill'] },
-    answer: 0,
+    misleads: { ja: ['花', 'クローバー', '風車'], en: ['Flower', 'Clover', 'Windmill'] },
     strokes: [
       ...[0, 120, 240].map((deg) =>
         place(join(curve([0, 0], [-0.14, -0.1], [-0.08, -0.24]), curve([-0.08, -0.24], [0.06, -0.28], [0.06, -0.2]), curve([0.06, -0.2], [0.06, -0.08], [0, 0])), 0.5, 0.38, deg),
@@ -4941,14 +4780,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'candle',
     genre: 'item',
-    labels: { ja: 'ろうそく', en: 'Candle' },
-    dexComment: {
+    label: { ja: 'ろうそく', en: 'Candle' },
+    comment: {
       ja: "お皿と取っ手でマグカップだと思ったはずニャ……ゆらゆらの小さな火、見てるとだんだん眠くなってくるニャ。",
       en: "A saucer and a handle should've been a mug, nya... That flickering little flame always makes me sleepy.",
     },
     dexMood: 'smug',
-    choices: { ja: ['ろうそく', 'マグカップ', 'えんぴつ', '電気スタンド'], en: ['Candle', 'Mug', 'Pencil', 'Desk lamp'] },
-    answer: 0,
+    misleads: { ja: ['マグカップ', 'えんぴつ', '電気スタンド'], en: ['Mug', 'Pencil', 'Desk lamp'] },
     strokes: [
       ellipse(0.5, 0.84, 0.3, 0.07, 180, 36),
       arc(0.86, 0.8, 0.06, 0.05, -120, 180, 14),
@@ -4965,14 +4803,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'hammer',
     genre: 'item',
-    labels: { ja: '金づち', en: 'Hammer' },
-    dexComment: {
+    label: { ja: '金づち', en: 'Hammer' },
+    comment: {
       ja: "四角い頭だけなら消しゴムだったニャ！ボクの頭はトントンしないでほしいニャ……でも釘がまっすぐ入ると、スッキリするニャ。",
       en: "Just a boxy head was an eraser, nya! Please don't bonk me... Still, a nail going in perfectly straight is so satisfying.",
     },
     dexMood: 'laugh',
-    choices: { ja: ['金づち', '消しゴム', '電池', 'おの'], en: ['Hammer', 'Eraser', 'Battery', 'Axe'] },
-    answer: 0,
+    misleads: { ja: ['消しゴム', '電池', 'おの'], en: ['Eraser', 'Battery', 'Axe'] },
     strokes: [
       line([0.18, 0.2], [0.82, 0.2], [0.82, 0.38], [0.18, 0.38], [0.18, 0.2]),
       line([0.3, 0.2], [0.3, 0.38]),
@@ -4991,14 +4828,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'hairdryer',
     genre: 'item',
-    labels: { ja: 'ドライヤー', en: 'Hair dryer' },
-    dexComment: {
+    label: { ja: 'ドライヤー', en: 'Hair dryer' },
+    comment: {
       ja: "丸に持ち手なんて、どう見ても虫メガネだったはずニャ！……お風呂上がりにあったかい風をあびるの、ボクも好きニャ。",
       en: "A circle with a handle is clearly a magnifying glass, nya! ...I love getting blasted with warm air after a bath too.",
     },
     dexMood: 'panic',
-    choices: { ja: ['ドライヤー', '虫メガネ', 'ラッパ', '掃除機'], en: ['Hair dryer', 'Magnifying glass', 'Trumpet', 'Vacuum cleaner'] },
-    answer: 0,
+    misleads: { ja: ['虫メガネ', 'ラッパ', '掃除機'], en: ['Magnifying glass', 'Trumpet', 'Vacuum cleaner'] },
     strokes: [
       circle(0.34, 0.36, 0.2, -90, 40),
       circle(0.34, 0.36, 0.12, -90, 28),
@@ -5014,14 +4850,13 @@ export const QUIZZES: Quiz[] = [
   {
     id: 'globe',
     genre: 'item',
-    labels: { ja: '地球儀', en: 'Globe' },
-    dexComment: {
+    label: { ja: '地球儀', en: 'Globe' },
+    comment: {
       ja: "半円のアームと台だけなら、U字の磁石だと思ったはずニャ……くるくる回して、行ってみたい国を指でさがすの楽しいニャ。",
       en: "Just the arc and the stand should've been a horseshoe magnet, nya... Spinning it and pointing at countries I want to visit is so fun.",
     },
     dexMood: 'smug',
-    choices: { ja: ['地球儀', '磁石', 'ボール', 'スイカ'], en: ['Globe', 'Magnet', 'Ball', 'Watermelon'] },
-    answer: 0,
+    misleads: { ja: ['磁石', 'ボール', 'スイカ'], en: ['Magnet', 'Ball', 'Watermelon'] },
     strokes: [
       arc(0.5, 0.44, 0.36, 0.36, -90, 90, 30),
       line([0.5, 0.8], [0.5, 0.88]),
@@ -5035,3 +4870,32 @@ export const QUIZZES: Quiz[] = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Translations
+// ---------------------------------------------------------------------------
+
+const TRANSLATIONS: Record<Exclude<Lang, BaseLang>, QuizTranslations> = {
+  'zh-CN': QUIZ_ZH_CN,
+  'zh-TW': QUIZ_ZH_TW,
+  ko: QUIZ_KO,
+};
+
+function withTranslations(quizzes: Quiz[]): Quiz[] {
+  const byId = new Map(quizzes.map((q) => [q.id, q]));
+  for (const [lang, pack] of Object.entries(TRANSLATIONS) as [Exclude<Lang, BaseLang>, QuizTranslations][]) {
+    for (const [id, text] of Object.entries(pack)) {
+      const quiz = byId.get(id);
+      if (!quiz) {
+        if (import.meta.env?.DEV) console.warn(`[i18n] ${lang}: no quiz with id "${id}"`);
+        continue;
+      }
+      quiz.label[lang] = text.label;
+      quiz.misleads[lang] = text.misleads;
+      quiz.comment[lang] = text.comment;
+    }
+  }
+  return quizzes;
+}
+
+export const QUIZZES: Quiz[] = withTranslations(BASE_QUIZZES);

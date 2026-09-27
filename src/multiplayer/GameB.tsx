@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { sound } from '../audio/SoundManager';
 import { AnswerButtons } from '../components/AnswerButtons';
 import { MascotCommentator } from '../components/MascotCommentator';
-import type { Choices, Lang } from '../data/quizzes';
+import type { Lang } from '../data/quizzes';
+import { localize } from '../i18n/lang';
 import { useMascot } from '../hooks/useMascot';
 import { fmt, type Dict } from '../i18n';
 import { PEN_COLORS, PEN_WIDTHS } from '../net/protocol';
@@ -108,7 +109,7 @@ export function GameB({ t, lang, scale, view, match }: Props) {
     );
   }
 
-  const choices = round.choices[lang] as Choices;
+  const choices = localize(round.choices, lang);
   const mine = view.mine;
   const lockRemaining = Math.max(0, mine.lockUntil - now);
   const reveal: 'drawing' | 'correct' | 'timeout' = view.roundEnd ? 'timeout' : mine.correctSlot !== null ? 'correct' : 'drawing';
@@ -161,7 +162,7 @@ export function GameB({ t, lang, scale, view, match }: Props) {
         </div>
 
         <div className="relative">
-          {amDrawer && <TopicRibbon t={t} topic={view.myTopic?.[lang] ?? '…'} />}
+          {amDrawer && <TopicRibbon t={t} topic={view.myTopic ? localize(view.myTopic, lang) : '…'} />}
           <div className={`comic-card relative overflow-hidden rounded-3xl bg-white ${danger && !amDrawer ? 'animate-heartbeat' : ''}`}>
             <SketchPad
               strokes={view.sketch}

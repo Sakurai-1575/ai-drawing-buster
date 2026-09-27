@@ -8,6 +8,9 @@
  * the HOST clock; guests convert with the offset measured by ping/pong.
  */
 import type { Genre } from '../data/genres';
+import type { Localized } from '../i18n/lang';
+
+export type { Localized };
 
 export type { Genre };
 
@@ -100,16 +103,11 @@ export interface CustomTopic {
   dummies: [string, string, string];
 }
 
-export interface Localized<T> {
-  ja: T;
-  en: T;
-}
-
 export interface DrawRoundSpec {
   index: number;
   drawerId: PlayerId;
   /** The four options in display order — which one is right is NOT sent to guessers. */
-  choices: Localized<[string, string, string, string]>;
+  choices: Localized<[string, string, string, string]>; // every language filled in by the host; older hosts send ja/en only
   startAt: number;
   durationMs: number;
 }

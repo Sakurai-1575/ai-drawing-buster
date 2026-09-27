@@ -1,16 +1,16 @@
 import { useCallback, useState } from 'react';
-import type { Lang } from '../data/quizzes';
+import { detectLang, isLang, type Lang } from '../i18n/lang';
 
 const KEY = 'adb.lang';
 
 function readLang(): Lang {
   try {
     const v = localStorage.getItem(KEY);
-    if (v === 'ja' || v === 'en') return v;
+    if (isLang(v)) return v;
   } catch {
     /* storage unavailable */
   }
-  return navigator.language.startsWith('ja') ? 'ja' : 'en';
+  return detectLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
 }
 
 export function useLang() {

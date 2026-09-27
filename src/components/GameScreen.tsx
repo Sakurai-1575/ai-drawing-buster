@@ -1,6 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import type { Lang } from '../data/quizzes';
-import { REVEAL_DRAW_MS, TIME_LIMIT_MS, drawProgressFor, type GameState } from '../game/engine';
+import { REVEAL_DRAW_MS, TIME_LIMIT_MS, displayChoices, drawProgressFor, type GameState } from '../game/engine';
 import { fmt, type Dict } from '../i18n';
 import { useMascot } from '../hooks/useMascot';
 import { AnswerButtons } from './AnswerButtons';
@@ -33,7 +33,8 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
   const progress = revealing
     ? state.revealFrom + (1 - state.revealFrom) * Math.min(1, state.revealElapsed / REVEAL_DRAW_MS)
     : drawProgressFor(state);
-  const answerLabel = q.choices[lang][q.answer];
+  const choices = displayChoices(q, lang);
+  const answerLabel = choices[q.answer];
   const remaining = TIME_LIMIT_MS - state.elapsed;
   const panic = state.mode !== 'timeattack' && !revealing && !state.paused && remaining <= 3000 && remaining > 0;
   const timeoutLanded = state.round === 'timeout' && state.revealLanded;
@@ -179,7 +180,7 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
 
         <AnswerButtons
           t={t}
-          choices={q.choices[lang]}
+          choices={choices}
           answer={q.answer}
           round={state.round}
           wrongPicks={state.wrongPicks}

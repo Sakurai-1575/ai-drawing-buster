@@ -162,7 +162,7 @@ export default function App() {
                 />
               )}
 
-              {!multiOpen && state.phase === 'title' && <TitleScreen t={t} lang={lang} scale={scale} bestScore={state.bestScore} onStart={() => setPickerOpen(true)} onOpenMultiplayer={() => setMultiOpen(true)} />}
+              {!multiOpen && state.phase === 'title' && <TitleScreen t={t} lang={lang} scale={scale} bestScore={state.bestScore} onStart={() => setPickerOpen(true)} onOpenMultiplayer={() => setMultiOpen(true)} onLang={setLang} />}
 
               {!multiOpen && state.phase === 'title' && pickerOpen && (
                 <SoloModeModal

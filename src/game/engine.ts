@@ -1,5 +1,5 @@
 import { sound } from '../audio/SoundManager';
-import { QUIZZES, type Choices, type Localized, type Quiz } from '../data/quizzes';
+import { ANSWER_INDEX, QUIZZES, quizOptions, type Choices, type Lang, type Quiz } from '../data/quizzes';
 import { recordDexCorrect } from './dex';
 import { checkAchievements } from '../services/achievements';
 
@@ -55,9 +55,16 @@ export type Rank = 'S' | 'A' | 'B' | 'C';
 
 export interface PreparedQuestion {
   quiz: Quiz;
-  /** Choices after shuffling (index-aligned across languages). */
-  choices: Localized<Choices>;
+  /** Shuffled display order: slot i shows option order[i] of `quizOptions`. Language-independent. */
+  order: number[];
+  /** Display slot of the correct answer. */
   answer: number;
+}
+
+/** The four buttons' labels, in display order, for `lang`. */
+export function displayChoices(q: PreparedQuestion, lang: Lang): Choices {
+  const options = quizOptions(q.quiz, lang);
+  return q.order.map((i) => options[i]) as Choices;
 }
 
 export interface RoundRecord {
@@ -210,12 +217,7 @@ function shuffle<T>(items: readonly T[]): T[] {
 
 function prepare(quiz: Quiz): PreparedQuestion {
   const order = shuffle([0, 1, 2, 3]);
-  const pick = (arr: Choices) => order.map((i) => arr[i]) as Choices;
-  return {
-    quiz,
-    choices: { ja: pick(quiz.choices.ja), en: pick(quiz.choices.en) },
-    answer: order.indexOf(quiz.answer),
-  };
+  return { quiz, order, answer: order.indexOf(ANSWER_INDEX) };
 }
 
 export function createIdleState(): GameState {

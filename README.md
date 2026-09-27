@@ -32,7 +32,10 @@ Every correct answer in any mode registers in the Buster Dex.
 src/
   data/quizzes.ts        200 AI line-drawing quizzes, tagged with a genre, each with a Buster Dex comment (normalized stroke data + shape helpers)
   data/drawTopics.ts     105 Mode B draw-only topics (15 per genre); Mode B draws from both = 305
-  data/genres.ts         The 7 genres and their JA/EN labels
+  data/quizI18n/         Quiz translations per language (zh-CN / zh-TW / ko), merged into QUIZZES by id
+  data/genres.ts         The 7 genres and their labels in all 5 languages
+  i18n/lang.ts           Supported languages (ja, en, zh-CN, zh-TW, ko), fallback rules, browser-language detection
+  i18n/strings/          UI strings, one file per language (ja.ts is the source; the compiler enforces every key)
   audio/SoundManager.ts  Web Audio synth SFX
   game/engine.ts         Game rules, scoring, ranks (pure state + sounds)
   game/useGameEngine.ts  requestAnimationFrame loop
@@ -42,6 +45,13 @@ src/
   components/            Screens and UI pieces
   hooks/                 16:9 stage scaling, language persistence
 ```
+
+## Languages
+UI strings, achievements, genres and Buster-kun's lines exist in all 5 languages (missing keys are compile errors).
+Quiz text only has to exist in `ja` + `en`; to translate a quiz, add its id to `src/data/quizI18n/<lang>.ts`
+(`label`, three `misleads`, `comment`). Untranslated quizzes fall back to English (Japanese for `en`), and a
+quiz's answer and decoys always fall back together so the options never mix languages.
+Fonts are per-language system stacks in `src/index.css` (switched by the `lang` attribute); nothing is downloaded.
 
 ## Online multiplayer (Mode A)
 Title → Multiplayer. The host creates a room (code like `BUST-1234`); up to 3 guests join with the code.

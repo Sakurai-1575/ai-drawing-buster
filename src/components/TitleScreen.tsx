@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { sound } from '../audio/SoundManager';
-import { QUIZZES, type Lang } from '../data/quizzes';
+import { QUIZZES, quizLabel, type Lang } from '../data/quizzes';
 import type { Dict } from '../i18n';
 import { DrawingCanvas } from './DrawingCanvas';
 import { MascotCharacter } from './MascotCharacter';
@@ -12,6 +12,7 @@ import { ACHIEVEMENTS, checkAchievements, loadAchievements, onAchievementsChange
 const countUnlocked = () => Object.keys(loadAchievements().unlocked).length;
 import { SettingsButton } from '../settings/SettingsButton';
 import { DexButton } from '../dex/DexButton';
+import { LanguageMenu } from '../settings/LanguagePicker';
 
 const DEMO_CYCLE_MS = 4200;
 const DEMO_DRAW_MS = 3000;
@@ -23,12 +24,13 @@ interface Props {
   bestScore: number;
   onStart: () => void;
   onOpenMultiplayer: () => void;
+  onLang: (lang: Lang) => void;
 }
 
 const HOW_TO_ICONS = ['⏱️', '⚡', '🏆', '⚠️'];
 const HOW_TO_TAG_BG = ['bg-sky-300', 'bg-amber-300', 'bg-emerald-300', 'bg-rose-300'];
 
-export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultiplayer }: Props) {
+export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultiplayer, onLang }: Props) {
   const [rankingOpen, setRankingOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
@@ -60,6 +62,7 @@ export function TitleScreen({ t, lang, scale, bestScore, onStart, onOpenMultipla
   return (
     <div className="relative flex h-full w-full items-center justify-center gap-14 p-10">
       <div className="absolute right-6 top-6 flex items-center gap-4">
+        <LanguageMenu lang={lang} onLang={onLang} label={t.setLanguageLabel} />
         <button
           type="button"
           tabIndex={-1}
@@ -206,7 +209,7 @@ function TitleDemo({ scale, lang, aboutLabel, onMascotClick }: { scale: number; 
         <MascotCharacter expression={smirking ? 'smug' : 'normal'} size={140} />
       </button>
       <div className="comic-card min-w-[200px] bg-amber-200 px-5 py-2 text-center text-2xl font-black">
-        {progress < 1 ? '？？？' : quiz.labels[lang]}
+        {progress < 1 ? '？？？' : quizLabel(quiz, lang)}
       </div>
     </div>
   );

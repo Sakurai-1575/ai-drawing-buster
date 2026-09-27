@@ -3,6 +3,7 @@ import { BGM_SOURCE, BGM_TRACKS, bgm, type BgmTrack } from '../audio/BgmManager'
 import { sound } from '../audio/SoundManager';
 import type { Lang } from '../data/quizzes';
 import type { Dict } from '../i18n';
+import { LanguagePicker } from './LanguagePicker';
 
 /**
  * Settings are declared as data: a list of sections, each a list of rows (label + control).
@@ -55,19 +56,7 @@ function buildSections(t: Dict, lang: Lang, onLang: (l: Lang) => void, audio: Re
         {
           id: 'lang',
           label: t.setLanguageLabel,
-          control: (
-            <Segmented
-              value={lang}
-              options={[
-                ['ja', '日本語 (JA)'],
-                ['en', 'English (EN)'],
-              ]}
-              onChange={(l) => {
-                sound.click();
-                onLang(l);
-              }}
-            />
-          ),
+          control: <LanguagePicker lang={lang} onLang={onLang} />,
         },
       ],
     },
@@ -217,7 +206,10 @@ function Credits({ t }: { t: Dict }) {
       <ul className="divide-y-2 divide-slate-100 rounded-xl border-[3px] border-slate-900 bg-white">
         {tracks.map((tr) => (
           <li key={tr.file} className="flex items-center justify-between gap-3 px-3 py-1.5">
-            <span className="truncate font-black">♪ {tr.title}</span>
+            {/* Track titles are Japanese proper names; keep them in a Japanese face whatever the UI language. */}
+            <span lang="ja" className="truncate font-black">
+              ♪ {tr.title}
+            </span>
             <span className={`shrink-0 text-sm font-bold ${tr.artist ? 'text-slate-700' : 'text-rose-500'}`}>{tr.artist ?? t.creditsArtistTbd}</span>
           </li>
         ))}
@@ -243,28 +235,6 @@ function Credits({ t }: { t: Dict }) {
 }
 
 // ---------------------------------------------------------------- controls
-
-function Segmented<T extends string>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) {
-  return (
-    <div role="radiogroup" className="flex shrink-0 overflow-hidden rounded-xl border-[3px] border-slate-900 shadow-[3px_3px_0_#0f172a]">
-      {options.map(([v, label], i) => (
-        <button
-          key={v}
-          type="button"
-          role="radio"
-          aria-checked={value === v}
-          tabIndex={-1}
-          onClick={() => onChange(v)}
-          className={`whitespace-nowrap px-4 py-1.5 text-base font-black ${i ? 'border-l-[3px] border-slate-900' : ''} ${
-            value === v ? 'bg-slate-900 text-amber-200' : 'bg-white hover:bg-amber-100'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function Switch({ on, label, onText, offText, onChange }: { on: boolean; label: string; onText: string; offText: string; onChange: (on: boolean) => void }) {
   return (

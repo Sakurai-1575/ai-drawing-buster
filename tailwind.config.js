@@ -4,14 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        game: [
-          '"Hiragino Maru Gothic ProN"',
-          '"BIZ UDPGothic"',
-          '"Yu Gothic UI"',
-          'Meiryo',
-          'system-ui',
-          'sans-serif',
-        ],
+        // Per-language stacks live in index.css (--font-game), switched by the `lang` attribute.
+        game: ['var(--font-game)'],
       },
     },
   },

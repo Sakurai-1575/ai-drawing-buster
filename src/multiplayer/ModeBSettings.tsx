@@ -245,7 +245,7 @@ function TopicModal({ t, match, onClose }: { t: Dict; match: MatchApi; onClose: 
         <div className="flex flex-col gap-3 px-6 py-4">
           <label className="flex items-center gap-3">
             <span className="w-28 shrink-0 text-sm font-black text-emerald-700">⭕ {t.mpTopicAnswer}</span>
-            {input(answer, setAnswer, 'ネコ / Cat', true)}
+            {input(answer, setAnswer, t.mpTopicExample, true)}
           </label>
           {dummies.map((d, i) => (
             <label key={i} className="flex items-center gap-3">

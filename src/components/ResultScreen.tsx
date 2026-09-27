@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useRollingNumber } from '../hooks/useRollingNumber';
-import type { Lang } from '../data/quizzes';
+import { quizLabel, type Lang } from '../data/quizzes';
 import { averageCorrectTime, fastestTime, rankFor, type GameState, type Rank } from '../game/engine';
 import { fmt, type Dict } from '../i18n';
 import { Confetti } from './Confetti';
@@ -82,7 +82,7 @@ function ScoreResult({ state, t, lang, onRetry, onTitle }: Props) {
 
       <div className="grid w-[1060px] grid-cols-10 gap-2" data-testid="result-badges">
         {state.records.map((r, i) => {
-          const label = state.questions[i].quiz.labels[lang];
+          const label = quizLabel(state.questions[i].quiz, lang);
           // Step the size down for long names ("Magnifying glass") and allow two lines, so text never leaves the badge.
           const size = label.length > 12 ? 'text-[11px]' : label.length > 8 ? 'text-xs' : 'text-sm';
           return (

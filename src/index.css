@@ -16,6 +16,52 @@ body {
   background: #0f172a;
 }
 
+/*
+ * Fonts per language. Han characters are shared across Japanese and Chinese but drawn
+ * differently (and Simplified/Traditional need their own glyphs), so each language gets a stack
+ * built for it — otherwise Chinese text renders in Japanese glyph shapes, and characters
+ * missing from the Japanese font fall back one by one into a patchwork (or tofu).
+ * Each stack: rounded faces first, then the OS defaults (macOS / Windows), then Noto / Source
+ * Han (Linux, or anyone who installed them). Nothing is downloaded, so it works offline.
+ *
+ * `--font-game` inherits, and every element that declares its own `lang` re-resolves
+ * `font-family`, so a Japanese BGM title inside a Korean UI still gets a Japanese face.
+ */
+:root {
+  --font-game: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'Yu Gothic UI', Meiryo, 'Noto Sans JP', 'Noto Sans CJK JP', system-ui, sans-serif;
+}
+[lang] {
+  font-family: var(--font-game);
+}
+[lang='zh-CN'] {
+  --font-game: 'Yuanti SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC',
+    'Source Han Sans SC', 'WenQuanYi Micro Hei', system-ui, sans-serif;
+}
+[lang='zh-TW'] {
+  --font-game: 'Yuanti TC', 'PingFang TC', 'Microsoft JhengHei UI', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', 'Source Han Sans TC',
+    system-ui, sans-serif;
+}
+[lang='ko'] {
+  --font-game: 'NanumSquareRound', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', 'Source Han Sans KR', system-ui,
+    sans-serif;
+}
+[lang='ja'],
+[lang='en'] {
+  --font-game: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'Yu Gothic UI', Meiryo, 'Noto Sans JP', 'Noto Sans CJK JP', system-ui, sans-serif;
+}
+
+/* Korean wraps between words (eojeol), not mid-word; `anywhere` still rescues an over-long word. */
+:lang(ko) {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* CJK: no line may start with closing punctuation (。」、 etc.). */
+:lang(ja),
+:lang(zh-CN),
+:lang(zh-TW) {
+  line-break: strict;
+}
+
 @layer components {
   .comic-card {
     @apply rounded-2xl border-4 border-slate-900 bg-white shadow-[4px_4px_0px_#0f172a];

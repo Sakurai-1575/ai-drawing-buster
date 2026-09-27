@@ -3,7 +3,7 @@ import { sound } from '../audio/SoundManager';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 import { MascotCharacter } from '../components/MascotCharacter';
 import { GENRES, GENRE_LABELS, GENRE_SHORT, type Genre } from '../data/genres';
-import { QUIZZES, type Lang, type Quiz } from '../data/quizzes';
+import { QUIZZES, quizComment, quizLabel, quizLang, type Lang, type Quiz } from '../data/quizzes';
 import { DEX_TOTAL, loadDex, onDexChange, type DexProgress } from '../game/dex';
 import { fmt, type Dict } from '../i18n';
 
@@ -129,7 +129,7 @@ export function BusterDexModal({ t, lang, scale, onClose }: Props) {
                       <div className="paper-bg overflow-hidden rounded-lg border-2 border-slate-300">
                         <DrawingCanvas strokes={q.strokes} progress={1} size={THUMB} scale={scale} showPencil={false} />
                       </div>
-                      <span className="w-full truncate text-sm font-black">{q.labels[lang]}</span>
+                      <span className="w-full truncate text-sm font-black">{quizLabel(q, lang)}</span>
                       {stat.bestTimeMs !== null && (
                         <span className="absolute -right-2 -top-2 rounded-md border-2 border-slate-900 bg-amber-300 px-1 text-[11px] font-black tabular-nums">
                           ⚡{fmtTime(stat.bestTimeMs)}
@@ -158,7 +158,9 @@ export function BusterDexModal({ t, lang, scale, onClose }: Props) {
 
 function DexDetail({ t, lang, scale, quiz, progress, onClose }: { t: Dict; lang: Lang; scale: number; quiz: Quiz; progress: DexProgress; onClose: () => void }) {
   const stat = progress.stats[quiz.id];
+  // Subtitle: the name in the game's original Japanese (English for Japanese players), unless that's what's already shown.
   const other: Lang = lang === 'ja' ? 'en' : 'ja';
+  const showOther = quizLang(quiz, lang) !== other;
   const date = stat ? new Intl.DateTimeFormat(lang, { year: 'numeric', month: 'numeric', day: 'numeric' }).format(stat.firstCorrectAt) : '';
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/50" onPointerDown={onClose} data-testid="dex-detail">
@@ -191,9 +193,13 @@ function DexDetail({ t, lang, scale, quiz, progress, onClose }: { t: Dict; lang:
             <>
               <div>
                 <div className="text-5xl font-black leading-tight" data-testid="dex-name">
-                  {quiz.labels[lang]}
+                  {quizLabel(quiz, lang)}
                 </div>
-                <div className="text-lg font-bold text-slate-500">{quiz.labels[other]}</div>
+                {showOther && (
+                  <div lang={other} className="text-lg font-bold text-slate-500">
+                    {quizLabel(quiz, other)}
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <Stat label={t.dexBest} value={fmtTime(stat.bestTimeMs)} tone="bg-amber-200" />
@@ -203,8 +209,8 @@ function DexDetail({ t, lang, scale, quiz, progress, onClose }: { t: Dict; lang:
               {stat.bestTimeMs === null && <div className="text-xs font-bold text-slate-500">⚡ {t.dexNoBestHint}</div>}
               <div className="mt-auto flex items-end gap-3">
                 <MascotCharacter expression={quiz.dexMood} size={110} />
-                <div className="relative mb-6 flex-1 rounded-2xl border-4 border-slate-900 bg-sky-100 px-4 py-3 text-base font-bold leading-relaxed shadow-[4px_4px_0_#0f172a]" data-testid="dex-comment">
-                  {quiz.dexComment[lang]}
+                <div className="relative mb-6 flex-1 rounded-2xl border-4 border-slate-900 bg-sky-100 px-4 py-3 text-base font-bold leading-relaxed shadow-[4px_4px_0_#0f172a] [text-wrap:pretty]" data-testid="dex-comment">
+                  {quizComment(quiz, lang)}
                   <span className="absolute -left-[15px] bottom-5 h-6 w-6 rotate-45 border-b-4 border-l-4 border-slate-900 bg-sky-100" />
                 </div>
               </div>
