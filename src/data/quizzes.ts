@@ -4894,6 +4894,9 @@ function withTranslations(quizzes: Quiz[]): Quiz[] {
       quiz.misleads[lang] = text.misleads;
       quiz.comment[lang] = text.comment;
     }
+    // New quizzes must ship translated: players would otherwise see them in English.
+    const missing = quizzes.filter((q) => !pack[q.id]).map((q) => q.id);
+    if (missing.length && import.meta.env?.DEV) console.warn(`[i18n] ${lang}: ${missing.length} untranslated quizzes (${missing.join(', ')})`);
   }
   return quizzes;
 }

@@ -48,9 +48,10 @@ src/
 
 ## Languages
 UI strings, achievements, genres and Buster-kun's lines exist in all 5 languages (missing keys are compile errors).
-Quiz text only has to exist in `ja` + `en`; to translate a quiz, add its id to `src/data/quizI18n/<lang>.ts`
-(`label`, three `misleads`, `comment`). Untranslated quizzes fall back to English (Japanese for `en`), and a
-quiz's answer and decoys always fall back together so the options never mix languages.
+All 200 quizzes are translated into every language (`src/data/quizI18n/<lang>.ts`: `label`, three `misleads`, `comment`).
+When adding a quiz, add it to each of those files too — dev builds warn in the console about untranslated quizzes.
+If one slips through, it falls back to English (Japanese for `en`), and a quiz's answer and decoys always fall back
+together so the options never mix languages.
 Fonts are per-language system stacks in `src/index.css` (switched by the `lang` attribute); nothing is downloaded.
 
 ## Online multiplayer (Mode A)
