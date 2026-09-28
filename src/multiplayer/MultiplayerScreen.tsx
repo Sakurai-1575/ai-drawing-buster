@@ -9,7 +9,7 @@ import { loadAllQuizText } from '../data/quizI18n';
 import { REVEAL_DRAW_MS, TIME_LIMIT_MS, drawProgress } from '../game/engine';
 import { useMascot } from '../hooks/useMascot';
 import { fmt, type Dict } from '../i18n';
-import { MAX_PLAYERS, MIN_PLAYERS_TO_START, NAME_MAX_LENGTH, QUESTION_COUNT_OPTIONS, type GameMode } from '../net/protocol';
+import { COMPACT_PLAYERS, MAX_PLAYERS, MIN_PLAYERS_TO_START, NAME_MAX_LENGTH, QUESTION_COUNT_OPTIONS, type GameMode } from '../net/protocol';
 import { buildInviteUrl, copyText, type Invite } from '../net/invite';
 import { GameB } from './GameB';
 import { ModeBSettings } from './ModeBSettings';
@@ -276,7 +276,8 @@ function Lobby({ t, lang, view, match }: { t: Dict; lang: Lang; view: MatchView;
 
   return (
     // Centered in the space *below* the fixed top-bar buttons (pt clears them), not the whole stage.
-    <div className={`flex h-full flex-col items-center justify-center px-10 pb-8 pt-24 ${modeB ? 'gap-4' : 'gap-6'}`}>
+    // Mode B carries a settings card, so it runs tighter (sized for a full room with every option expanded).
+    <div className={`flex h-full flex-col items-center justify-center px-10 ${modeB ? 'gap-3 pb-5 pt-20' : 'gap-6 pb-8 pt-24'}`}>
       <div className="absolute right-6 top-6 flex items-center gap-3">
         <SettingsButton t={t} />
       </div>
@@ -292,9 +293,9 @@ function Lobby({ t, lang, view, match }: { t: Dict; lang: Lang; view: MatchView;
       </div>
 
       <div className="flex items-end gap-6">
-        <div className="comic-card -rotate-2 bg-amber-200 px-8 py-3 text-center">
+        <div className={`comic-card -rotate-2 bg-amber-200 px-8 text-center ${modeB ? 'py-2' : 'py-3'}`}>
           <div className="text-sm font-black tracking-[0.3em] text-amber-900">{t.mpRoomCode}</div>
-          <div className="select-text text-6xl font-black tabular-nums tracking-wider">{view.code}</div>
+          <div className={`select-text font-black tabular-nums tracking-wider ${modeB ? 'text-5xl' : 'text-6xl'}`}>{view.code}</div>
         </div>
         <div className="flex flex-col items-start gap-2 pb-1">
           <div className="flex gap-2">
@@ -325,25 +326,30 @@ function Lobby({ t, lang, view, match }: { t: Dict; lang: Lang; view: MatchView;
         </div>
       )}
 
-      <div className="grid w-[900px] grid-cols-4 gap-4">
+      {/* MAX_PLAYERS slots, four to a row: icon beside the name so two rows fit above the settings. */}
+      <div className={`grid w-[960px] grid-cols-4 ${modeB ? 'gap-x-4 gap-y-2' : 'gap-4'}`}>
         {slots.map((p, i) => (
           <div
             key={p?.id ?? `empty-${i}`}
-            className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border-4 px-2 ${modeB ? 'h-28' : 'h-36'} ${
-              p ? `comic-card ${PLAYER_COLORS[i % PLAYER_COLORS.length]} ${p.connected ? '' : 'opacity-40'}` : 'border-dashed border-slate-400 bg-white/50'
+            className={`flex min-w-0 items-center gap-2.5 rounded-2xl border-4 px-3 ${modeB ? 'h-[54px]' : 'h-[76px]'} ${
+              p ? `comic-card ${PLAYER_COLORS[i % PLAYER_COLORS.length]} ${p.connected ? '' : 'opacity-40'}` : 'justify-center border-dashed border-slate-400 bg-white/50'
             }`}
           >
             {p ? (
               <>
-                <span className={modeB ? 'text-3xl' : 'text-4xl'}>{p.isHost ? '👑' : '🙂'}</span>
-                <span className="max-w-full truncate text-2xl font-black">{p.name}</span>
-                <span className="flex gap-1.5">
-                  {p.isHost && <Badge className="bg-slate-900 text-amber-200">HOST</Badge>}
-                  {p.id === view.me && <Badge className="bg-white">{t.mpYou}</Badge>}
+                <span className={`shrink-0 ${modeB ? 'text-2xl' : 'text-3xl'}`}>{p.isHost ? '👑' : '🙂'}</span>
+                <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                  <span className={`max-w-full truncate font-black leading-tight ${modeB ? 'text-lg' : 'text-xl'}`}>{p.name}</span>
+                  {(p.isHost || p.id === view.me) && (
+                    <span className="flex gap-1.5">
+                      {p.isHost && <Badge className="bg-slate-900 text-amber-200">HOST</Badge>}
+                      {p.id === view.me && <Badge className="bg-white">{t.mpYou}</Badge>}
+                    </span>
+                  )}
                 </span>
               </>
             ) : (
-              <span className="animate-blink text-lg font-black text-slate-400">{t.mpWaitingSlot}</span>
+              <span className="animate-blink text-base font-black text-slate-400">{t.mpWaitingSlot}</span>
             )}
           </div>
         ))}
@@ -571,6 +577,8 @@ function Result({ t, view, match, onExit }: { t: Dict; view: MatchView; match: M
   const winner = view.players[0];
   const isHost = view.role === 'host';
   const canRematch = view.players.filter((p) => p.connected).length >= MIN_PLAYERS_TO_START;
+  const compact = view.players.length > COMPACT_PLAYERS;
+  const perColumn = compact ? Math.ceil(view.players.length / 2) : view.players.length;
   return (
     // Results sit in the upper area; the action bar is pinned to the bottom with a clear band above it,
     // so the stamp palette (which opens upward from the bar) never covers the standings.
@@ -590,22 +598,29 @@ function Result({ t, view, match, onExit }: { t: Dict; view: MatchView; match: M
           </div>
         )}
 
-        <div className="comic-card w-[720px] bg-white px-6 py-3" data-testid="standings">
+        {/* Up to COMPACT_PLAYERS: one wide column. More: two columns filled top-to-bottom (1–4 left, 5–8 right). */}
+        <div
+          className={`comic-card bg-white px-6 py-3 ${compact ? 'grid w-[1040px] grid-flow-col gap-x-8' : 'w-[720px]'}`}
+          style={compact ? { gridTemplateRows: `repeat(${perColumn}, auto)` } : undefined}
+          data-testid="standings"
+        >
           {view.players.map((p, i) => (
             <div
               key={p.id}
-              className={`flex items-center gap-4 border-b-2 border-slate-200 py-1.5 last:border-0 ${p.connected ? '' : 'opacity-40'} ${
-                p.id === view.me ? 'rounded-lg bg-amber-100' : ''
-              }`}
+              className={`flex min-w-0 items-center ${(i + 1) % perColumn ? 'border-b-2 border-slate-200' : ''} ${compact ? 'gap-3 py-1' : 'gap-4 py-1.5'} ${
+                p.connected ? '' : 'opacity-40'
+              } ${p.id === view.me ? 'rounded-lg bg-amber-100' : ''}`}
             >
-              <span className="w-12 text-center text-4xl">{['🥇', '🥈', '🥉'][i] ?? <span className="text-2xl font-black">{i + 1}</span>}</span>
-              <span className="min-w-0 flex-1 truncate text-3xl font-black">
+              <span className={`shrink-0 text-center ${compact ? 'w-10 text-3xl' : 'w-12 text-4xl'}`}>
+                {['🥇', '🥈', '🥉'][i] ?? <span className={`font-black ${compact ? 'text-xl' : 'text-2xl'}`}>{i + 1}</span>}
+              </span>
+              <span className={`min-w-0 flex-1 truncate font-black ${compact ? 'text-2xl' : 'text-3xl'}`}>
                 {p.isHost && '👑 '}
                 {p.name}
                 {p.id === view.me && <span className="ml-2 align-middle text-base text-rose-500">({t.mpYou})</span>}
                 {!p.connected && <span className="ml-2 align-middle text-base text-slate-500">({t.mpLeft})</span>}
               </span>
-              <span className="text-4xl font-black tabular-nums">{p.score.toLocaleString()}</span>
+              <span className={`shrink-0 font-black tabular-nums ${compact ? 'text-3xl' : 'text-4xl'}`}>{p.score.toLocaleString()}</span>
             </div>
           ))}
         </div>

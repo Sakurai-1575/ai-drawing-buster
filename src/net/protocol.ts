@@ -14,11 +14,19 @@ export type { Localized };
 
 export type { Genre };
 
-/** Bump when the message shapes change so mismatched builds refuse each other cleanly. */
-export const PROTOCOL_VERSION = 5;
+/**
+ * Bump when the message shapes or the room capacity change so mismatched builds refuse each other
+ * cleanly (an older build can't lay out a bigger room). 6: MAX_PLAYERS 4 → 8.
+ */
+export const PROTOCOL_VERSION = 6;
 
-/** Room capacity including the host. Everything else is array-based, so raising this is enough. */
-export const MAX_PLAYERS = 4;
+/**
+ * Room capacity including the host. The logic is array-based; the screens switch to compact
+ * layouts above COMPACT_PLAYERS (lobby slots, scoreboard, round/final standings), sized for this.
+ */
+export const MAX_PLAYERS = 8;
+/** More players than this and the player lists switch to their compact layouts. */
+export const COMPACT_PLAYERS = 4;
 export const MIN_PLAYERS_TO_START = 2;
 export const DEFAULT_QUESTION_COUNT = 5;
 export const QUESTION_COUNT_OPTIONS = [3, 5, 10] as const;

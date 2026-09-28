@@ -62,7 +62,7 @@ together so the options never mix languages.
 Fonts are per-language system stacks in `src/index.css` (switched by the `lang` attribute); nothing is downloaded.
 
 ## Online multiplayer (Mode A)
-Title → Multiplayer. The host creates a room (code like `BUST-1234`); up to 3 guests join with the code.
+Title → Multiplayer. The host creates a room (code like `BUST-1234`); up to 7 guests join with the code (8 players, `MAX_PLAYERS`). Above 4 players the lobby, scoreboard and standings switch to compact layouts (`COMPACT_PLAYERS`).
 Peers connect over WebRTC data channels, brokered by the free public PeerServer (`0.peerjs.com`).
 A wrong answer locks that player out for 3s. The host is authoritative: it picks the questions, times each round, judges answers and broadcasts results.
 There is no TURN relay, so players behind some strict NATs / corporate networks may fail to connect.

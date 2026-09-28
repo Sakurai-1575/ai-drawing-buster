@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Lang } from '../data/quizzes';
-import { GENRES, GENRE_LABELS } from '../data/genres';
+import { GENRES, GENRE_LABELS, GENRE_SHORT } from '../data/genres';
 import { fmt, type Dict } from '../i18n';
 import { FIXED_COUNT_OPTIONS, LAP_OPTIONS, TOPIC_TEXT_MAX, isValidTopic, type CustomTopic, type Genre, type TopicRule } from '../net/protocol';
 import { loadSavedTopics, makeTopic, saveTopics } from './customTopics';
@@ -46,10 +46,11 @@ export function ModeBSettings({ t, lang, view, match }: Props) {
 
       {s.drawerRule === 'fixed' && (
         <Row label={t.mpArtist}>
-          <div className="flex flex-wrap gap-2">
+          {/* Four to a row, names truncated: a full room (8) stays at two rows. */}
+          <div className="grid min-w-0 flex-1 grid-cols-4 gap-1.5">
             {connected.map((p) => (
-              <Pill key={p.id} active={p.id === artistId} disabled={!isHost} onClick={() => match.updateSettings({ fixedDrawerId: p.id })}>
-                ✏️ {p.name}
+              <Pill key={p.id} small active={p.id === artistId} disabled={!isHost} title={p.name} onClick={() => match.updateSettings({ fixedDrawerId: p.id })}>
+                <span className="block truncate">✏️ {p.name}</span>
               </Pill>
             ))}
           </div>
@@ -70,8 +71,9 @@ export function ModeBSettings({ t, lang, view, match }: Props) {
         {s.topicRule === 'genre' && (
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
             {GENRES.map((g) => (
-              <Pill key={g} small active={s.genres.includes(g)} disabled={!isHost} onClick={() => toggleGenre(g)}>
-                {GENRE_LABELS[g][lang]}
+              // Short labels keep all ten within two rows beside the rule switch; the full name is the tooltip.
+              <Pill key={g} small active={s.genres.includes(g)} disabled={!isHost} title={GENRE_LABELS[g][lang]} onClick={() => toggleGenre(g)}>
+                {GENRE_SHORT[g][lang]}
               </Pill>
             ))}
             {s.genres.length === 0 && <span className="text-xs font-black text-slate-500">{t.mpGenreAllHint}</span>}
@@ -161,14 +163,29 @@ function Choices({
   );
 }
 
-function Pill({ active, disabled, small, onClick, children }: { active: boolean; disabled: boolean; small?: boolean; onClick: () => void; children: ReactNode }) {
+function Pill({
+  active,
+  disabled,
+  small,
+  title,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  disabled: boolean;
+  small?: boolean;
+  title?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"
       tabIndex={-1}
       disabled={disabled}
+      title={title}
       onClick={onClick}
-      className={`whitespace-nowrap rounded-lg border-[3px] border-slate-900 font-black ${small ? 'px-2 py-0.5 text-sm' : 'px-3 py-0.5 text-base'} ${
+      className={`min-w-0 whitespace-nowrap rounded-lg border-[3px] border-slate-900 font-black ${small ? 'px-2 py-0.5 text-sm' : 'px-3 py-0.5 text-base'} ${
         active ? 'bg-amber-300 shadow-[2px_2px_0_#0f172a]' : 'bg-white'
       } ${disabled ? 'cursor-default' : 'hover:-translate-y-0.5'}`}
     >
