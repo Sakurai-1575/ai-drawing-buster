@@ -26,7 +26,6 @@ export const BGM_TRACKS: Record<BgmScene, BgmTrack[]> = {
     { file: 'game-1-jailbreak.mp3', title: 'Jailbreak', artist: 'G-MIYA' },
     { file: 'game-2-ah-mou-mechakucha.mp3', title: 'あーもうめちゃくちゃ！' },
     { file: 'game-3-ultra-oosouji.mp3', title: 'ウルトラ大掃除' },
-    { file: 'game-4-time-attack.mp3', title: 'ターイムアタッーク！' },
   ],
 };
 
