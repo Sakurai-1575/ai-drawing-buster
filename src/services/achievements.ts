@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Achievements. Web build: persisted in localStorage. Steam build: the platform hook in
  * `unlockAchievement` forwards each unlock to Steamworks (ids match the Steamworks API names).
  *
@@ -395,3 +395,4 @@ if (import.meta.env.DEV) {
   w.debugUnlockAchievement = unlockAchievement;
   w.debugResetAchievements = () => save(empty());
 }
+

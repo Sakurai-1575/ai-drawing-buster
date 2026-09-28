@@ -1,4 +1,4 @@
-import type { DrawTopicTranslations } from '../drawTopics';
+﻿import type { DrawTopicTranslations } from '../drawTopics';
 import type { QuizTranslations } from '../quizzes';
 
 /** Korean quiz text — every quiz (answer, three decoys, Buster Dex comment). Loaded on demand. */
@@ -2526,3 +2526,4 @@ export const DRAW_KO: DrawTopicTranslations = {
   doghouse: { answer: '개집', decoys: ['집', '새집', '상자'] },
   comb: { answer: '빗', decoys: ['칫솔', '포크', '사다리'] },
 };
+

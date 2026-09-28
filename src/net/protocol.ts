@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Wire protocol for online play.
  *   Mode A — AI speed-guess battle: everyone guesses the AI's drawing.
  *   Mode B — Draw together: players take turns drawing; the others guess.
@@ -260,3 +260,4 @@ export function standings(players: PlayerInfo[]): PlayerInfo[] {
     .sort((a, b) => b.p.score - a.p.score || a.i - b.i)
     .map(({ p }) => p);
 }
+

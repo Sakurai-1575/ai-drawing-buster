@@ -1,4 +1,4 @@
-/** Japanese — the source language: every other dictionary must have exactly these keys. */
+﻿/** Japanese — the source language: every other dictionary must have exactly these keys. */
 export const ja = {
   title: 'AIお絵描きバスター',
   tagline: 'AIが描く線画を、誰よりも早く当てろ！',
@@ -229,3 +229,4 @@ export const ja = {
 } as const;
 
 export type Dict = { [K in keyof typeof ja]: string };
+

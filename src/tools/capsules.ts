@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Steam store capsule art, rendered from the game's own design language (cream dot paper,
  * comic 3D logo, sketch cards, pencil) straight onto canvases at exact pixel sizes.
  * Dev-only tool — see CapsuleGenerator.
@@ -715,3 +715,4 @@ export function capsuleMime(spec: CapsuleSpec) {
 export function capsuleFilename(spec: CapsuleSpec) {
   return `steam_${spec.id}_${spec.width}x${spec.height}.${spec.format === 'jpeg' ? 'jpg' : 'png'}`;
 }
+

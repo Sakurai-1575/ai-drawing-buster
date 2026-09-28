@@ -1,4 +1,4 @@
-import type { Dict } from '../i18n';
+﻿import type { Dict } from '../i18n';
 import { SettingsButton } from '../settings/SettingsButton';
 
 interface Props {
@@ -29,3 +29,4 @@ export function PauseMenu({ t, onResume, onRestart, onTitle }: Props) {
     </div>
   );
 }
+

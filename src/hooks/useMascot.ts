@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import type { MascotLineKind } from '../mascotLines';
 
 export interface MascotEvent {
@@ -16,3 +16,4 @@ export function useMascot() {
   }, []);
   return { event, say };
 }
+

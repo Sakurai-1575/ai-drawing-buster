@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import type { Lang } from '../data/quizzes';
 import type { Dict } from '../i18n';
@@ -65,3 +65,4 @@ export function AchievementToaster({ t, lang }: { t: Dict; lang: Lang }) {
     </div>
   );
 }
+

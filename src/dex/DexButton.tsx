@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import { DEX_TOTAL, loadDex, onDexChange } from '../game/dex';
 import type { Dict } from '../i18n';
@@ -29,3 +29,4 @@ export function DexButton({ t, className = '' }: { t: Dict; className?: string }
     </button>
   );
 }
+

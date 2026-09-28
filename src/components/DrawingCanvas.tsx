@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+﻿import { useEffect, useMemo, useRef } from 'react';
 import type { Stroke } from '../data/quizzes';
 import { PENCIL } from '../art/pencil';
 import { PAD_RATIO, buildPath, drawPartial } from '../art/strokePath';
@@ -71,3 +71,4 @@ function Pencil() {
     </svg>
   );
 }
+

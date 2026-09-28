@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Background music: one looping track per scene, streamed with HTMLAudioElement (the files are
  * minutes long, so no full decode into memory). Shares the mute switch with SoundManager.
  */
@@ -187,3 +187,4 @@ if (import.meta.env.DEV) {
   // Handle for manual testing and e2e checks.
   (window as unknown as { __bgm?: BgmManager }).__bgm = bgm;
 }
+

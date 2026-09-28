@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+﻿import { useCallback, useRef, useState } from 'react';
 import { loadLanguage } from '../i18n/loadLanguage';
 import { detectLang, isLang, type Lang } from '../i18n/lang';
 
@@ -34,3 +34,4 @@ export function useLang() {
   }, []);
   return [lang, setLang] as const;
 }
+

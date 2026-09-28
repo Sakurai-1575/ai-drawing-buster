@@ -1,4 +1,4 @@
-/**
+﻿/**
  * On-demand quiz translations. Each non-base language is its own chunk (quiz text + Mode B
  * draw-topic text), fetched the first time that language is needed (startup language, a
  * language switch, or hosting a multiplayer room whose guests may play in any language).
@@ -39,3 +39,4 @@ export function loadQuizText(lang: Lang): Promise<void> {
 export function loadAllQuizText(): Promise<void> {
   return Promise.all(LANGS.map(loadQuizText)).then(() => undefined);
 }
+

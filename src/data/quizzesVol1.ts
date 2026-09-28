@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quizzes 1–200. Everything is generated in code — no external files or APIs.
  *
  * Coordinates are normalized to 0.0–1.0 (x → right, y → down). Strokes are drawn in
@@ -4660,3 +4660,4 @@ export const QUIZZES_VOL1: Quiz[] = [
     ],
   },
 ];
+

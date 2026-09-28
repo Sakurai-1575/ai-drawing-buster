@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent } from 'react';
+﻿import { useEffect, useRef, type PointerEvent } from 'react';
 import { PEN_COLORS, PEN_WIDTHS, STROKE_SCALE } from '../net/protocol';
 import type { SketchStroke } from './useMatch';
 
@@ -115,3 +115,4 @@ export function SketchPad({ strokes, size, scale, input }: Props) {
     />
   );
 }
+

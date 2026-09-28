@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Buster Dex progress: which AI quizzes the player has answered correctly (in any mode),
  * with first-solve date, best time, and total correct count. Persisted in localStorage.
  */
@@ -95,3 +95,4 @@ if (import.meta.env.DEV) {
   w.debugUnlockAllDex = unlockAll;
   w.debugResetDex = resetAll;
 }
+

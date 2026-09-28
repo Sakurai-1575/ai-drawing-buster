@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import { MascotCharacter } from '../components/MascotCharacter';
 import { fmt, type Dict } from '../i18n';
@@ -114,3 +114,4 @@ function ModeCard({ badge, icon, title, desc, players, color, rot, onPick, onHov
     </button>
   );
 }
+

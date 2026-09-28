@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+﻿import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { sound } from '../audio/SoundManager';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 import { MascotCharacter } from '../components/MascotCharacter';
@@ -242,3 +242,4 @@ function Stat({ label, value, tone, small = false }: { label: string; value: str
     </div>
   );
 }
+

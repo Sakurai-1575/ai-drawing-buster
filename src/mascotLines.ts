@@ -1,4 +1,4 @@
-import type { FullyLocalized } from './i18n/lang';
+﻿import type { FullyLocalized } from './i18n/lang';
 
 /** Buster-kun's lines: one random pick per event. `{name}` is filled for multiplayer lines. */
 
@@ -99,3 +99,4 @@ export const MASCOT_LINES: FullyLocalized<Record<MascotLineKind, string[]>> = {
     drawGuessed: ['{name} 님이 알아봤다! 화백 좀 치네냥!', '엥, 그 그림으로 맞혔다고!?', '{name}, 에스퍼냥!?'],
   },
 };
+

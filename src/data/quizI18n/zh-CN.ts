@@ -1,4 +1,4 @@
-import type { DrawTopicTranslations } from '../drawTopics';
+﻿import type { DrawTopicTranslations } from '../drawTopics';
 import type { QuizTranslations } from '../quizzes';
 
 /** Simplified Chinese quiz text — every quiz (answer, three decoys, Buster Dex comment). Loaded on demand. */
@@ -2526,3 +2526,4 @@ export const DRAW_ZH_CN: DrawTopicTranslations = {
   doghouse: { answer: '狗窝', decoys: ['房子', '鸟窝箱', '箱子'] },
   comb: { answer: '梳子', decoys: ['牙刷', '叉子', '梯子'] },
 };
+

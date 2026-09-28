@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+﻿import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { Lang } from '../data/quizzes';
 import type { Dict } from '../i18n';
 import { SettingsModal } from './SettingsModal';
@@ -30,3 +30,4 @@ export function useSettings(): SettingsApi {
   if (!api) throw new Error('useSettings must be used inside <SettingsProvider>');
   return api;
 }
+

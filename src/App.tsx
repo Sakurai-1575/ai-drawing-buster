@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+﻿import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { bgm } from './audio/BgmManager';
 import { sound } from './audio/SoundManager';
 import { GameScreen } from './components/GameScreen';
@@ -202,3 +202,4 @@ export default function App() {
     </div>
   );
 }
+

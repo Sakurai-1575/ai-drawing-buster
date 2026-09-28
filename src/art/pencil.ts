@@ -1,4 +1,4 @@
-/** Pencil icon geometry (54×54 box, graphite tip at (5, 49)). Shared by the SVG cursor and canvas renders. */
+﻿/** Pencil icon geometry (54×54 box, graphite tip at (5, 49)). Shared by the SVG cursor and canvas renders. */
 export const PENCIL = {
   body: 'M14 30 L38 6 L48 16 L24 40 Z',
   bodyFill: '#fcd34d',
@@ -10,3 +10,4 @@ export const PENCIL = {
   size: 54,
   tip: [5, 49] as const,
 };
+

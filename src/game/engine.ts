@@ -1,4 +1,4 @@
-import { sound } from '../audio/SoundManager';
+﻿import { sound } from '../audio/SoundManager';
 import { ANSWER_INDEX, QUIZZES, quizOptions, type Choices, type Lang, type Quiz } from '../data/quizzes';
 import { recordDexCorrect } from './dex';
 import { checkAchievements } from '../services/achievements';
@@ -554,3 +554,4 @@ export function fastestTime(records: RoundRecord[]): number | null {
   const times = records.filter((r) => r.outcome === 'correct').map((r) => r.timeMs);
   return times.length ? Math.min(...times) : null;
 }
+

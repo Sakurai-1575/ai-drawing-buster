@@ -1,4 +1,4 @@
-import type { Lang } from './lang';
+﻿import type { Lang } from './lang';
 import { ja, type Dict } from './strings/ja';
 
 export * from './lang';
@@ -40,3 +40,4 @@ export function getStrings(lang: Lang): Dict {
 export function fmt(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? ''));
 }
+

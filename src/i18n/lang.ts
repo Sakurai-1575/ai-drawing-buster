@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Supported languages and the fallback rules every piece of localized data goes through.
  *
  * UI strings (`STRINGS`) are complete for every language — the compiler enforces it. Content
@@ -74,3 +74,4 @@ export function detectLang(tags: readonly string[]): Lang {
   }
   return 'en';
 }
+

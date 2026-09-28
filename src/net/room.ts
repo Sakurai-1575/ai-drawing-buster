@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Thin PeerJS transport: a host that owns the room code, and guests that connect to it.
  * No game rules live here — see multiplayer/useMatch.ts.
  */
@@ -217,3 +217,4 @@ export class GuestRoom {
     window.setTimeout(() => peer.destroy(), 300);
   }
 }
+

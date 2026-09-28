@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+﻿import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { Lang } from '../data/quizzes';
 import type { Dict } from '../i18n';
 import { BusterDexModal } from './BusterDexModal';
@@ -28,3 +28,4 @@ export function useDex(): DexApi {
   if (!api) throw new Error('useDex must be used inside <DexProvider>');
   return api;
 }
+

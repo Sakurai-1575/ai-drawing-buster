@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+﻿import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { bgm } from '../audio/BgmManager';
 import { sound } from '../audio/SoundManager';
 import { AnswerButtons } from '../components/AnswerButtons';
@@ -658,3 +658,4 @@ function Result({ t, view, match, onExit }: { t: Dict; view: MatchView; match: M
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Procedural sound effects using raw Web Audio oscillators — no audio files.
  * The AudioContext is created lazily on the first user gesture (browser autoplay policy).
  */
@@ -233,3 +233,4 @@ function readMuted() {
 }
 
 export const sound = new SoundManager();
+

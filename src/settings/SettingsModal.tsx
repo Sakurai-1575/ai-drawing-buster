@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+﻿import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { BGM_SOURCE, BGM_TRACKS, bgm, type BgmTrack } from '../audio/BgmManager';
 import { sound } from '../audio/SoundManager';
 import type { Lang } from '../data/quizzes';
@@ -287,3 +287,4 @@ function Slider({
     </div>
   );
 }
+

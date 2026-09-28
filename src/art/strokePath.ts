@@ -1,4 +1,4 @@
-import type { Point, Stroke } from '../data/quizzes';
+﻿import type { Point, Stroke } from '../data/quizzes';
 
 /**
  * Arc-length timeline for a drawing, shared by the in-game canvas and the Steam capsule generator.
@@ -78,3 +78,4 @@ export function drawPartial(ctx: CanvasRenderingContext2D | null, path: PathData
   ctx?.stroke();
   return tip;
 }
+

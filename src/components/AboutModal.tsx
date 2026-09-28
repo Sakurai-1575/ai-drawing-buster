@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import type { Dict } from '../i18n';
 import { MASCOT_EXPRESSIONS, type MascotExpression } from '../mascotLines';
@@ -81,3 +81,4 @@ export function AboutModal({ t, onClose }: { t: Dict; onClose: () => void }) {
     </Modal>
   );
 }
+

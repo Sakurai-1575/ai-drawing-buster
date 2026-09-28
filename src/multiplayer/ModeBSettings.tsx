@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+﻿import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Lang } from '../data/quizzes';
 import { GENRES, GENRE_LABELS, GENRE_SHORT } from '../data/genres';
 import { fmt, type Dict } from '../i18n';
@@ -298,3 +298,4 @@ function TopicModal({ t, match, onClose }: { t: Dict; match: MatchApi; onClose: 
     </div>
   );
 }
+

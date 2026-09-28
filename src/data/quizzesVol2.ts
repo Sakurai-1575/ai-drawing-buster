@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quizzes 201–300. Same rules as ./quizzes.ts: coordinates are 0.0–1.0, strokes draw in order,
  * and the first strokes are chosen to suggest something else (one of the decoys).
  * Other languages' text lives in ./quizI18n/<lang>.ts.
@@ -2265,3 +2265,4 @@ const CULTURE: Quiz[] = [
 ];
 
 export const QUIZZES_VOL2: Quiz[] = [...ANIMALS, ...CREATURES, ...NATURE, ...ITEMS, ...FASHION, ...VEHICLES, ...FOOD, ...CULTURE];
+

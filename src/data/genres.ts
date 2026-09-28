@@ -1,4 +1,4 @@
-import type { FullyLocalized } from '../i18n/lang';
+﻿import type { FullyLocalized } from '../i18n/lang';
 
 /** Topic genres, shared by the AI quizzes (Solo / Mode A / Mode B) and Mode B's draw-only topics. */
 export const GENRES = ['animal', 'creature', 'food', 'plant', 'vehicle', 'building', 'item', 'fashion', 'fantasy', 'culture'] as const;
@@ -30,3 +30,4 @@ export const GENRE_SHORT: Record<Genre, FullyLocalized<string>> = {
   fantasy: { ja: '🪄 ファンタジー', en: '🪄 Fantasy', 'zh-CN': '🪄 奇幻', 'zh-TW': '🪄 奇幻', ko: '🪄 판타지' },
   culture: { ja: '🗺️ 文化・名所', en: '🗺️ Culture', 'zh-CN': '🗺️ 文化', 'zh-TW': '🗺️ 文化', ko: '🗺️ 문화' },
 };
+

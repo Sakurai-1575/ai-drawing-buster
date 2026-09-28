@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+﻿import type { CSSProperties } from 'react';
 import { SUDDEN_LIVES, TIME_LIMIT_MS, type GameState } from '../game/engine';
 import { useRollingNumber } from '../hooks/useRollingNumber';
 import type { Dict } from '../i18n';
@@ -172,3 +172,4 @@ function PenaltyPopup({ label }: { label: string }) {
     </span>
   );
 }
+

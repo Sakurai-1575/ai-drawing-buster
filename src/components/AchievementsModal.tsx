@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import type { Lang } from '../data/quizzes';
 import { fmt, type Dict } from '../i18n';
 import { ACHIEVEMENTS, loadAchievements, onAchievementsChange } from '../services/achievements';
@@ -62,3 +62,4 @@ export function AchievementsModal({ t, lang, onClose }: { t: Dict; lang: Lang; o
     </Modal>
   );
 }
+

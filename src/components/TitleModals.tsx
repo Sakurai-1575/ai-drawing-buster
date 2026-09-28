@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Lang } from '../data/quizzes';
 import { TOP_SCORES_MAX, loadTopScores } from '../game/engine';
 import type { Dict } from '../i18n';
@@ -126,3 +126,4 @@ export function RankingModal({ t, lang, onClose }: { t: Dict; lang: Lang; onClos
     </Modal>
   );
 }
+

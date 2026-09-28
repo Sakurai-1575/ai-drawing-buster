@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import { QUIZZES, quizLabel, type Lang } from '../data/quizzes';
 import type { Dict } from '../i18n';
@@ -215,3 +215,4 @@ function TitleDemo({ scale, lang, aboutLabel, onMascotClick }: { scale: number; 
     </div>
   );
 }
+

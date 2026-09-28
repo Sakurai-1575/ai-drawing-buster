@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+﻿import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { sound } from '../audio/SoundManager';
 import { LANGS, LANG_NAMES, LANG_SHORT, type Lang } from '../i18n/lang';
 
@@ -113,3 +113,4 @@ export function LanguageMenu({ lang, onLang, label }: { lang: Lang; onLang: (lan
     </div>
   );
 }
+

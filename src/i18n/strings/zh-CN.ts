@@ -1,4 +1,4 @@
-import type { Dict } from './ja';
+﻿import type { Dict } from './ja';
 
 /** Simplified Chinese. Buster-kun: 傲娇 + 小嘴很欠 gamer cat, ends lines with 喵. */
 export const zhCN: Dict = {
@@ -229,3 +229,4 @@ export const zhCN: Dict = {
   achSecret: '隐藏成就',
   achSecretHint: '秘密成就喵。条件等解锁了再告诉你！',
 };
+

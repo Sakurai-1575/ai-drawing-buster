@@ -1,4 +1,4 @@
-import { sound } from '../audio/SoundManager';
+﻿import { sound } from '../audio/SoundManager';
 import type { Dict } from '../i18n';
 import { useSettings } from './SettingsContext';
 
@@ -35,3 +35,4 @@ export function SettingsButton({ t, onBeforeOpen, variant = 'label', className =
     </button>
   );
 }
+

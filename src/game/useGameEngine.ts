@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { sound } from '../audio/SoundManager';
 import { createGame, createIdleState, step, submitAnswer, type GameState, type SoloMode } from './engine';
 
@@ -63,3 +63,4 @@ export function useGameEngine() {
 
   return { state: ref.current, ref, start, answer, setPaused, togglePause, quitToTitle };
 }
+

@@ -1,4 +1,4 @@
-import { TOPIC_POOL_MAX, isValidTopic, sanitizeTopicText, type CustomTopic } from '../net/protocol';
+﻿import { TOPIC_POOL_MAX, isValidTopic, sanitizeTopicText, type CustomTopic } from '../net/protocol';
 
 /** Mode B custom topics this player has authored, kept across sessions. */
 const KEY = 'adb.customTopics';
@@ -31,3 +31,4 @@ export function makeTopic(answer: string, dummies: [string, string, string]): Cu
     dummies: dummies.map(sanitizeTopicText) as [string, string, string],
   };
 }
+

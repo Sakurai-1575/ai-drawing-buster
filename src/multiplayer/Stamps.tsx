@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { MascotCharacter } from '../components/MascotCharacter';
 import type { Dict } from '../i18n';
 import type { MascotExpression } from '../mascotLines';
@@ -154,3 +154,4 @@ export function StampLayer({ stamps, players, now }: { stamps: FlyingStamp[]; pl
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Online play: room lifecycle, host-authoritative rules, and the view state every client renders.
  *   Mode A — AI speed-guess battle (everyone guesses the AI's drawing).
  *   Mode B — Draw together (players take turns drawing; the others guess).
@@ -1218,3 +1218,4 @@ export function useMatch() {
 }
 
 export type MatchApi = ReturnType<typeof useMatch>;
+

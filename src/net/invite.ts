@@ -1,4 +1,4 @@
-import { normalizeRoomCode, type GameMode } from './protocol';
+﻿import { normalizeRoomCode, type GameMode } from './protocol';
 
 /** One-click invites: `?room=BUST-1234&mode=a|b` on the game's own URL. */
 
@@ -55,3 +55,4 @@ export async function copyText(text: string): Promise<boolean> {
   area.remove();
   return ok;
 }
+

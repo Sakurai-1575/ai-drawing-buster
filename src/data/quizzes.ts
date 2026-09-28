@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The quiz list and the helpers that read it. The data itself lives in ./quizzesVol1–3
  * (plain data that depends only on ./shapes and ./quizTypes), so it can sit in its own
  * chunks without any import pointing back here.
@@ -57,3 +57,4 @@ export function applyQuizTranslations(lang: PackLang, pack: QuizTranslations): v
   const missing = QUIZZES.filter((q) => !pack[q.id]).map((q) => q.id);
   if (missing.length && import.meta.env?.DEV) console.warn(`[i18n] ${lang}: ${missing.length} untranslated quizzes (${missing.join(', ')})`);
 }
+

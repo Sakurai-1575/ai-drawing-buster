@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import {
   CAPSULES,
   HERO_SAFE_AREA,
@@ -196,3 +196,4 @@ function Preview({ spec, ready, onDownload, canvasRef }: PreviewProps) {
     </section>
   );
 }
+

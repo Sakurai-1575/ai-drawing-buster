@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import type { Lang } from '../data/quizzes';
 import type { MascotEvent } from '../hooks/useMascot';
 import { fmt } from '../i18n';
@@ -68,3 +68,4 @@ export function MascotCommentator({ event, lang, size = 150, balloonHeight = 104
     </div>
   );
 }
+

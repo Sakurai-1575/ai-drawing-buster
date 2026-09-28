@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+﻿import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 const COLORS = ['#fb7185', '#38bdf8', '#fcd34d', '#34d399', '#a78bfa', '#fb923c'];
 const COUNT = 90;
@@ -50,3 +50,4 @@ export function Confetti({ burst }: { burst: number }) {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import type { Dict } from './ja';
+﻿import type { Dict } from './ja';
 
 export const en: Dict = {
   title: 'AI Drawing Buster',
@@ -228,3 +228,4 @@ export const en: Dict = {
   achSecret: 'Secret',
   achSecretHint: "A secret, nya! Unlock it to find out.",
 };
+

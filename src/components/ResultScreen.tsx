@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+﻿import type { CSSProperties } from 'react';
 import { useRollingNumber } from '../hooks/useRollingNumber';
 import { quizLabel, type Lang } from '../data/quizzes';
 import { averageCorrectTime, fastestTime, rankFor, type GameState, type Rank } from '../game/engine';
@@ -259,3 +259,4 @@ function Stat({ label, value, className }: { label: string; value: string; class
     </div>
   );
 }
+

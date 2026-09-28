@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { sound } from '../audio/SoundManager';
 
 const TICK_INTERVAL_MS = 45;
@@ -43,3 +43,4 @@ export function useRollingNumber(target: number, duration = 700, initial = targe
 
   return [shown, shown !== target];
 }
+

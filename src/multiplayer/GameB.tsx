@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+﻿import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { sound } from '../audio/SoundManager';
 import { AnswerButtons } from '../components/AnswerButtons';
 import { MascotCommentator } from '../components/MascotCommentator';
@@ -321,3 +321,4 @@ function TopicRibbon({ t, topic }: { t: Dict; topic: string }) {
     </div>
   );
 }
+

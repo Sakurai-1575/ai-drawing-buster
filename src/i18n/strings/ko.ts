@@ -1,4 +1,4 @@
-import type { Dict } from './ja';
+﻿import type { Dict } from './ja';
 
 /** Korean. Buster-kun: 츤데레 + 얄미운 겜돌이 고양이, ends lines with ~냥. */
 export const ko: Dict = {
@@ -229,3 +229,4 @@ export const ko: Dict = {
   achSecret: '숨겨진 업적',
   achSecretHint: '비밀 업적이다냥. 조건은 달성하고 나서 확인해!',
 };
+

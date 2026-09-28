@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quiz types and constants. Dependency-free (type-only imports), so the quiz data files and
  * the translation packs can use them without pulling in anything else.
  */
@@ -42,3 +42,4 @@ export type QuizTranslations = Record<string, QuizText>;
 
 /** Languages whose quiz text lives in a lazily loaded pack (`./quizI18n/<lang>.ts`). */
 export type PackLang = Exclude<Lang, BaseLang>;
+

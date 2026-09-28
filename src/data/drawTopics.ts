@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mode B (draw together) text-only topics: people draw these, so there are no strokes.
  * Each row: [id, answer ja, answer en, then three decoys as [ja, en]] — decoys are things a
  * rough drawing of the answer could be mistaken for.
@@ -83,3 +83,4 @@ export function applyDrawTopicTranslations(lang: PackLang, pack: DrawTopicTransl
   const missing = DRAW_TOPICS.filter((t) => !pack[t.id.replace('draw-', '')]).map((t) => t.id);
   if (missing.length && import.meta.env?.DEV) console.warn(`[i18n] ${lang}: ${missing.length} untranslated draw topics (${missing.join(', ')})`);
 }
+

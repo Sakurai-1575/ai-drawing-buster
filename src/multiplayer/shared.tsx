@@ -1,4 +1,4 @@
-/** Pieces shared by the Mode A and Mode B game screens. */
+﻿/** Pieces shared by the Mode A and Mode B game screens. */
 import { useEffect, useState, type CSSProperties } from 'react';
 import { fmt, type Dict } from '../i18n';
 import { COMPACT_PLAYERS, type PlayerId, type PlayerInfo } from '../net/protocol';
@@ -209,3 +209,4 @@ export function ToastFeed({ t, toasts, now }: { t: Dict; toasts: Toast[]; now: n
     </div>
   );
 }
+

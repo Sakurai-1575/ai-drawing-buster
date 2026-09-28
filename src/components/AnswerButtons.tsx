@@ -1,4 +1,4 @@
-import type { Choices } from '../data/quizzes';
+﻿import type { Choices } from '../data/quizzes';
 import { PENALTY_MS, type RoundState } from '../game/engine';
 import type { Dict } from '../i18n';
 
@@ -80,3 +80,4 @@ export function AnswerButtons({ t, choices, answer, round, wrongPicks, lockRemai
     </div>
   );
 }
+

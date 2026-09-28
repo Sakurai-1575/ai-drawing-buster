@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+﻿import { useEffect, useState, type CSSProperties } from 'react';
 import { sound } from '../audio/SoundManager';
 import { loadModeBest, SOLO_MODES, type SoloMode } from '../game/engine';
 import { fmt, type Dict } from '../i18n';
@@ -105,3 +105,4 @@ export function SoloModeModal({ t, onPick, onClose }: Props) {
     </div>
   );
 }
+

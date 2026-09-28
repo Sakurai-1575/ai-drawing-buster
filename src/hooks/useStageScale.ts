@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 
 export const STAGE_W = 1280;
 export const STAGE_H = 720;
@@ -15,3 +15,4 @@ export function useStageScale() {
   }, []);
   return scale;
 }
+

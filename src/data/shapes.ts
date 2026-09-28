@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shape helpers for the quiz line drawings. Coordinates are normalized to 0.0–1.0
  * (x → right, y → down); every helper returns a Stroke (a polyline drawn in order).
  */
@@ -193,3 +193,4 @@ export function roundRect(x0: number, y0: number, x1: number, y1: number, r: num
     arc(x0 + r, y0 + r, r, r, 180, 270, 6),
   );
 }
+

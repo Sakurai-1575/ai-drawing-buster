@@ -1,4 +1,4 @@
-import type { MascotExpression } from '../mascotLines';
+﻿import type { MascotExpression } from '../mascotLines';
 import { PENCIL } from '../art/pencil';
 
 const INK = '#0f172a';
@@ -276,3 +276,4 @@ function Sweat() {
     </g>
   );
 }
+

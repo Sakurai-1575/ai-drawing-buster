@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+﻿import { useEffect, useRef, type CSSProperties } from 'react';
 import type { Lang } from '../data/quizzes';
 import { INTRO_GO_MS, REVEAL_DRAW_MS, TIME_LIMIT_MS, displayChoices, drawProgressFor, type GameState } from '../game/engine';
 import { fmt, type Dict } from '../i18n';
@@ -337,3 +337,4 @@ function CriticalBurst({ label, points }: { label: string; points: number }) {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import type { Dict } from './ja';
+﻿import type { Dict } from './ja';
 
 /** Traditional Chinese (Taiwan wording). Buster-kun: 傲嬌 + 嘴很賤 gamer cat, ends lines with 喵. */
 export const zhTW: Dict = {
@@ -229,3 +229,4 @@ export const zhTW: Dict = {
   achSecret: '隱藏成就',
   achSecretHint: '祕密成就喵。條件等解鎖了再告訴你！',
 };
+
