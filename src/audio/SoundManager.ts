@@ -185,6 +185,14 @@ class SoundManager {
     [523.25, 659.25, 783.99].forEach((f, i) => this.tone(f, i * 0.07, 0.12, 'square', 0.22));
   }
 
+  /** "GO!" — the start hit after READY: a low punch under a bright octave, with a short sparkle. */
+  go() {
+    this.tone(110, 0, 0.18, 'square', 0.3, 60);
+    this.tone(1046.5, 0, 0.22, 'square', 0.26);
+    this.tone(2093, 0, 0.3, 'triangle', 0.2);
+    this.noise(0, 0.12, 0.3, 'highpass', 4000, 8000);
+  }
+
   /** Result fanfare: rising C-major run, then a held chord. */
   fanfare() {
     const run = [523.25, 659.25, 783.99, 1046.5];

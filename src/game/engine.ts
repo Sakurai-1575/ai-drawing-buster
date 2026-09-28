@@ -23,6 +23,10 @@ export const CRITICAL_REMAINING_MS = 7_000;
 /** Combo bonus: +10% per consecutive correct answer after the first, capped at ×2.0. */
 export const COMBO_STEP = 0.1;
 export const COMBO_MAX_MULTIPLIER = 2;
+/** READY... GO! before the first drawing. Every clock (question timer, time attack, lockouts) waits. */
+export const INTRO_MS = 1_000;
+/** The GO! part of the intro: its last this-many ms. */
+export const INTRO_GO_MS = 400;
 
 // ---------------------------------------------------------------- solo modes
 
@@ -102,6 +106,8 @@ export interface GameState {
   lastPenalty: number;
   wrongPicks: number[];
   paused: boolean;
+  /** ms left of the READY... GO! intro; 0 once play has started. */
+  intro: number;
   score: number;
   lastPoints: number;
   lastMultiplier: number;
@@ -237,6 +243,7 @@ export function createIdleState(): GameState {
     lastPenalty: 0,
     wrongPicks: [],
     paused: false,
+    intro: 0,
     score: 0,
     lastPoints: 0,
     lastMultiplier: 1,
@@ -273,6 +280,7 @@ export function createGame(mode: SoloMode = 'score'): GameState {
     ...createIdleState(),
     mode,
     phase: 'playing',
+    intro: INTRO_MS,
     questions: (mode === 'score' ? pool.slice(0, QUESTIONS_PER_GAME) : pool).map(prepare),
     modeBest: loadModeBest(mode),
   };
@@ -384,6 +392,14 @@ function advance(s: GameState) {
 export function step(s: GameState, dt: number): boolean {
   if (s.phase !== 'playing' || s.paused) return false;
 
+  // READY... GO!: nothing else moves until it's over.
+  if (s.intro > 0) {
+    const wasReady = s.intro > INTRO_GO_MS;
+    s.intro = Math.max(0, s.intro - dt);
+    if (wasReady && s.intro <= INTRO_GO_MS) sound.go();
+    return true;
+  }
+
   // Time attack: one 3-minute clock over everything (drawing and reveals alike).
   if (s.mode === 'timeattack') {
     s.taRemaining = Math.max(0, s.taRemaining - dt);
@@ -440,6 +456,7 @@ export function canAnswer(s: GameState, choice?: number): boolean {
   return (
     s.phase === 'playing' &&
     !s.paused &&
+    s.intro <= 0 &&
     s.round === 'drawing' &&
     s.lockRemaining <= 0 &&
     (choice === undefined || !s.wrongPicks.includes(choice))

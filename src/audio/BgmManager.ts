@@ -35,6 +35,11 @@ export const BGM_SOURCE = { name: 'DOVA-SYNDROME', url: 'https://dova-s.jp/' };
 
 /** Default level: quiet enough that SFX (answers, countdown) stay clear on top. */
 export const DEFAULT_BGM_VOLUME = 0.35;
+/**
+ * Output level at slider 100%. The mastered tracks are loud next to the synth SFX, so the whole
+ * slider range is scaled down: the default 35% plays at ~16% element volume.
+ */
+const BGM_BASE_GAIN = 0.45;
 const VOLUME_KEY = 'adb.bgmVolume';
 const FADE_MS = 600;
 
@@ -96,8 +101,13 @@ class BgmManager {
     } catch {
       /* storage unavailable */
     }
-    if (this.audio && !this.fading) this.audio.volume = this._volume;
+    if (this.audio && !this.fading) this.audio.volume = this.outputVolume;
     this.volumeListeners.forEach((fn) => fn());
+  }
+
+  /** Element volume actually played: the slider level times the base gain. */
+  private get outputVolume() {
+    return this._volume * BGM_BASE_GAIN;
   }
 
   onVolumeChange(fn: () => void): () => void {
@@ -145,7 +155,7 @@ class BgmManager {
     const start = performance.now();
     this.fadeTimer = window.setInterval(() => {
       const k = Math.min(1, (performance.now() - start) / FADE_MS);
-      if (audio === this.audio) audio.volume = this._volume * k;
+      if (audio === this.audio) audio.volume = this.outputVolume * k;
       if (k >= 1 || audio !== this.audio) {
         window.clearInterval(this.fadeTimer);
         this.fading = false;

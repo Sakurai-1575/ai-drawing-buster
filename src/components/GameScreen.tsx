@@ -1,6 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import type { Lang } from '../data/quizzes';
-import { REVEAL_DRAW_MS, TIME_LIMIT_MS, displayChoices, drawProgressFor, type GameState } from '../game/engine';
+import { INTRO_GO_MS, REVEAL_DRAW_MS, TIME_LIMIT_MS, displayChoices, drawProgressFor, type GameState } from '../game/engine';
 import { fmt, type Dict } from '../i18n';
 import { useMascot } from '../hooks/useMascot';
 import { AnswerButtons } from './AnswerButtons';
@@ -105,7 +105,7 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
           total={state.questions.length}
           elapsed={state.elapsed}
           score={state.score}
-          active={!revealing}
+          active={!revealing && state.intro <= 0}
           onPause={onPause}
           state={state}
         />
@@ -190,6 +190,7 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
         />
       </div>
 
+      {state.intro > 0 && <IntroOverlay go={state.intro <= INTRO_GO_MS} paused={state.paused} />}
       {panic && <div className="danger-vignette pointer-events-none absolute inset-0 z-30" />}
       {state.round === 'correct' && state.lastCritical && (
         <CriticalBurst key={state.critId} label={godSpeed ? '⚡ GOD SPEED!!' : '💥 CRITICAL!!'} points={state.lastPoints} />
@@ -288,6 +289,27 @@ function ComboBadge({ t, combo }: { t: Dict; combo: number }) {
           </span>
         ))}
       </span>
+    </div>
+  );
+}
+
+/** READY... GO! over the whole screen before the first drawing. Language-neutral on purpose (like the online READY?). */
+function IntroOverlay({ go, paused }: { go: boolean; paused: boolean }) {
+  const text = 'whitespace-nowrap font-black italic leading-none [-webkit-text-stroke:4px_#0f172a] [paint-order:stroke_fill] [text-shadow:8px_8px_0_#0f172a]';
+  return (
+    <div
+      className={`pointer-events-none absolute inset-0 z-40 flex items-center justify-center transition-colors duration-200 ${go ? 'bg-white/0' : 'bg-white/45'}`}
+      style={{ '--intro-state': paused ? 'paused' : 'running' } as CSSProperties}
+    >
+      {go ? (
+        <div key="go" className={`animate-intro-go text-[150px] text-rose-500 ${text}`}>
+          GO!
+        </div>
+      ) : (
+        <div key="ready" className={`animate-intro-ready text-[110px] text-amber-400 ${text}`}>
+          READY...
+        </div>
+      )}
     </div>
   );
 }
