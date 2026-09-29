@@ -7,13 +7,13 @@ Steam store / screenshot / library graphics in five languages (ja, en, zh, tc, k
     promo_assets/steam_assets/<ja|en|zh|tc|ko>/{store,screenshots,library}/<name>_<size>_<steamlang>.png
     (steam language suffixes: japanese / english / schinese / tchinese / koreana)
 
-tc and ko are "standard sizes only": just the eight sizes Steamworks asks for (460x215 header, 231x87 small,
-616x353 main, 374x448 vertical, 1438x810 page background, 600x900 library capsule, 1920x620 hero, 1280x720
-logo), no 2x versions, and capsules only (no screenshots). ja / en / zh keep their full sets.
+tc and ko output only the sizes the Steamworks page needs, and the store capsules at the sizes Steam has registered
+for ja / en / zh (920x430 header, 462x174 small, 1232x706 main, 748x896 vertical, 1438x810 page background):
+a different size for the same slot in another language is rejected on upload. Plus the library capsule (600x900),
+hero (1920x620) and logo (1280x720). Capsules only (no screenshots). ja / en / zh keep their full sets.
 
 capsules     The dev capsule renderer (src/tools/capsules.ts) drawn per language in a real browser — logo,
-             chip and font change, the art stays. Steam's current sizes are rendered natively and the older,
-             smaller ones are exact 2x downscales of them (Lanczos).
+             chip and font change, the art stays. the sizes Steam has registered are rendered natively (no 1x / older sizes are written any more).
 screenshots  Real play captured in each language's UI (1920x1080). Every shot comes twice: `screenshots/` has it
              with a caption (the game frame at 90% under a caption band, native pixels, no upscaling) and
              `screenshots/clean/` is the plain 1920x1080 frame.
@@ -62,7 +62,7 @@ class Lang:
     game: str  # the game's own language code (localStorage adb.lang)
     steam: str  # Steam's language API name (file suffix)
     title: str
-    standard_only: bool = False  # only the standard Steamworks sizes (no 2x, no extras), capsules only
+    standard_only: bool = False  # only the sizes Steam needs (store sizes = the registered high-res ones), capsules only
 
 
 LANGS = {
@@ -80,17 +80,13 @@ LANGS = {
 # renderer id → native size (all rendered once per language)
 CAPSULE_IDS = ['header_capsule', 'small_capsule', 'main_capsule', 'vertical_capsule', 'page_background', 'library_capsule', 'library_header', 'library_hero', 'library_logo']
 
-# (folder, file stem, renderer id, size) — sizes equal to the native render are copied, smaller ones downscaled.
+# (folder, file stem, renderer id, size). Only the sizes registered in Steamworks: the store capsules at the
+# high-res sizes (a different size for a slot that already has one is rejected on upload), plus the library set.
 CAPSULE_FILES = [
     ('store', 'capsule_header', 'header_capsule', (920, 430)),
-    ('store', 'capsule_header', 'header_capsule', (460, 215)),
     ('store', 'capsule_small', 'small_capsule', (462, 174)),
-    ('store', 'capsule_small', 'small_capsule', (231, 87)),
     ('store', 'capsule_main', 'main_capsule', (1232, 706)),
-    ('store', 'capsule_main', 'main_capsule', (616, 353)),
     ('store', 'capsule_vertical', 'vertical_capsule', (748, 896)),
-    ('store', 'capsule_vertical', 'vertical_capsule', (374, 448)),
-    ('store', 'capsule_vertical', 'library_capsule', (600, 900)),  # the 600x900 art (same as the library capsule)
     ('store', 'page_background', 'page_background', (1438, 810)),
     ('library', 'library_capsule', 'library_capsule', (600, 900)),
     ('library', 'library_header', 'library_header', (920, 430)),
@@ -100,12 +96,13 @@ CAPSULE_FILES = [
 ]
 TRANSPARENT = {'library_logo'}
 
-# The eight standard sizes Steamworks asks for (folder, file stem, size); tc / ko output exactly these.
+# What tc / ko output (folder, file stem, size). The five store sizes are the ones Steam has registered for
+# ja / en / zh (the "high resolution" versions): every language has to match them exactly.
 STANDARD = {
-    ('store', 'capsule_header', (460, 215)),
-    ('store', 'capsule_small', (231, 87)),
-    ('store', 'capsule_main', (616, 353)),
-    ('store', 'capsule_vertical', (374, 448)),
+    ('store', 'capsule_header', (920, 430)),
+    ('store', 'capsule_small', (462, 174)),
+    ('store', 'capsule_main', (1232, 706)),
+    ('store', 'capsule_vertical', (748, 896)),
     ('store', 'page_background', (1438, 810)),
     ('library', 'library_capsule', (600, 900)),
     ('library', 'library_hero', (1920, 620)),

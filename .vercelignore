@@ -1,0 +1,8 @@
+# The Vercel CLI uses this file INSTEAD of .gitignore, so it repeats what must never be uploaded.
+promo_assets
+scripts
+*.mp4
+dist
+.env*
+*.local
+src-tauri/target

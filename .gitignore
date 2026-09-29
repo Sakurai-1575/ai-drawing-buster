@@ -8,7 +8,10 @@ src-tauri/target
 .vercel
 
 ai_drawing_buster_gameplay.mp4
-promo_assets/
+# Promo output stays out of Git (videos, voices, raw recordings) - except the Steam store graphics (PNG, ~30 MB),
+# which are the deliverables uploaded to Steamworks.
+promo_assets/*
+!promo_assets/steam_assets/
 *.mp4
 
 # Python bytecode from scripts/
