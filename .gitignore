@@ -10,3 +10,7 @@ src-tauri/target
 ai_drawing_buster_gameplay.mp4
 promo_assets/
 *.mp4
+
+# Python bytecode from scripts/
+__pycache__/
+*.pyc
