@@ -44,7 +44,7 @@
 1. `READY... GO!`（ゲーム開始時のみ、1.0秒）
 2. AIがキャンバスに線画を**一筆ずつ**描き始める（10秒。時間切れの時点で絵の90%まで描かれ、残りは答え合わせ時に0.2秒で早送り）。
 3. プレイヤーは4択ボタン（キー `1`〜`4` / `Q` `W` `E` `R`）で回答。
-4. 正解 → 残り時間に応じた得点×コンボ倍率。**残り7秒以上（開始3秒以内）の正解は `CRITICAL!!`（GOD SPEED）演出**。
+4. 正解 → 残り時間に応じた得点×コンボ倍率。**残り7秒以上（開始3秒以内）の正解は `CRITICAL!!` 演出、残り8.5秒以上（1.5秒以内）は最速枠のバナー**（文言は i18n キー `godSpeed`：en `LIGHTNING FAST!!` / ja・zh `神速!!` / ko `번개 속도!!`。以前の `GOD SPEED!!` は英語圏では「ご武運を」の意味になるため廃止）。
 5. 不正解（お手つき）→ 減点・ロック・コンボ消滅。その間もAIは描き続ける。
 6. バスターくんが状況に応じて煽る／悔しがる。
 
@@ -266,7 +266,7 @@ public/audio/bgm/               BGM mp3
 - バスターくんのキャラクター（8表情・全言語セリフ・プロフィール画面）
 - Web版（Vercel）デプロイ
 - Steamストア／ライブラリ用画像の自動生成ツール（メイン 1232×706、ヘッダー 920×430、小型 462×174、垂直 748×896、ライブラリ 600×900／ヘッダー／ヒーロー／ロゴ、アイコン類）
-- **Steam用グラフィックの3言語版**（ja / en / zh）：`scripts/generate_steam_assets_i18n.py` が `promo_assets/steam_assets/<言語>/{store,screenshots,library}/` に93ファイルを出力。ファイル名末尾に Steam の言語名（`_japanese` / `_english` / `_schinese`）。カプセルは Steam 現行サイズと旧サイズ（2倍縮小）の両方、スクリーンショットは各言語のUIで実プレイを撮影（キャプション付き＋無加工の `clean/`、各8枚）。カプセル描画は `src/tools/capsules.ts`（`setCapsuleLang`）。
+- **Steam用グラフィックの5言語版**（ja / en / zh / tc / ko）：`scripts/generate_steam_assets_i18n.py` が `promo_assets/steam_assets/<言語>/{store,screenshots,library}/` に出力（ja / en / zh は93ファイル。tc / ko は Steamworks 標準サイズのカプセルのみ各8ファイル。ロゴはゲーム内タイトル：`AI塗鴉大破解` / `AI 낙서 버스터`）。ファイル名末尾に Steam の言語名（`_japanese` / `_english` / `_schinese`）。カプセルは Steam 現行サイズと旧サイズ（2倍縮小）の両方、スクリーンショットは各言語のUIで実プレイを撮影（キャプション付き＋無加工の `clean/`、各8枚）。カプセル描画は `src/tools/capsules.ts`（`setCapsuleLang`）。
 - SNS用画像生成スクリプト（プロフィールアイコン 1024×1024、Xヘッダー 1500×500、YouTubeバナー 2048×1152）
 
 ### 6.3 未完成・TODO・既知の課題

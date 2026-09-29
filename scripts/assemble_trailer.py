@@ -175,7 +175,7 @@ def build_scenes(ffprobe: str, voices: dict) -> list[Scene]:
     s.fit_voice(vlen['01_hook_esper'], 0.2, clip_len['scene1'])
     s.headings += [
         Telop('最速0.5秒即答！？', m['start'] - a, m['answer1'] - a + 0.1),
-        Telop('GOD SPEED!!', m['answer2'] - a - 0.05, s.duration - 0.05, color=(251, 113, 133, 255)),
+        Telop('神速!!', m['answer2'] - a - 0.05, s.duration - 0.05, color=(251, 113, 133, 255)),
     ]
     s.sfx += [('click', m['start'], -6), ('go', m['live1'] - 0.4, 0), ('critical', m['answer1'], 0), ('achievement', m['answer1'] + 0.12, -5),
               ('critical_combo2', m['answer2'], 0)]

@@ -40,9 +40,9 @@ const BUBBLE = '#bae6fd';
 // ---------------------------------------------------------------- languages
 // Steam store art is localized per language: the logo, the chip under it and the font. The art itself
 // (sketch cards, Buster-kun, lamps) is language-independent. Titles: ja/zh are the game's own UI titles
-// (src/i18n/strings/ja.ts, zh-CN.ts); en is "AI Quick Draw Buster" (the game's English title too, src/i18n/strings/en.ts).
+// (src/i18n/strings/ja.ts, zh-CN.ts, zh-TW.ts, ko.ts); en is "AI Quick Draw Buster" (the game's English title too, src/i18n/strings/en.ts).
 
-export type CapsuleLang = 'ja' | 'en' | 'zh';
+export type CapsuleLang = 'ja' | 'en' | 'zh' | 'tc' | 'ko';
 
 interface Copy {
   line1: string;
@@ -74,6 +74,22 @@ const COPY: Record<CapsuleLang, Copy> = {
     join: '',
     chip: 'REAL-TIME SKETCH QUIZ',
     font: '"Yuanti SC", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif',
+  },
+  // Traditional Chinese (zh-TW.ts: AI塗鴉大破解), same stack idea as the game's own [lang='zh-TW'].
+  tc: {
+    line1: 'AI塗鴉',
+    line2: '大破解',
+    join: '',
+    chip: 'REAL-TIME SKETCH QUIZ',
+    font: '"Yuanti TC", "PingFang TC", "Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans TC", "Noto Sans CJK TC", system-ui, sans-serif',
+  },
+  // Korean (ko.ts: AI 낙서 버스터): a space between the words, so the one-row main capsule keeps it.
+  ko: {
+    line1: 'AI 낙서',
+    line2: '버스터',
+    join: ' ',
+    chip: 'REAL-TIME SKETCH QUIZ',
+    font: '"NanumSquareRound", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR", system-ui, sans-serif',
   },
 };
 

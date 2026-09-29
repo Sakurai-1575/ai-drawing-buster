@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
-Steam store / screenshot / library graphics in three languages (ja, en, zh) → promo_assets/steam_assets/.
+Steam store / screenshot / library graphics in five languages (ja, en, zh, tc, ko) → promo_assets/steam_assets/.
 
-    python scripts/generate_steam_assets_i18n.py [--only capsules,screenshots] [--langs ja,en,zh]
+    python scripts/generate_steam_assets_i18n.py [--only capsules,screenshots] [--langs ja,en,zh,tc,ko]
 
-    promo_assets/steam_assets/<ja|en|zh>/{store,screenshots,library}/<name>_<size>_<steamlang>.png
-    (steam language suffixes: japanese / english / schinese)
+    promo_assets/steam_assets/<ja|en|zh|tc|ko>/{store,screenshots,library}/<name>_<size>_<steamlang>.png
+    (steam language suffixes: japanese / english / schinese / tchinese / koreana)
+
+tc and ko are "standard sizes only": just the eight sizes Steamworks asks for (460x215 header, 231x87 small,
+616x353 main, 374x448 vertical, 1438x810 page background, 600x900 library capsule, 1920x620 hero, 1280x720
+logo), no 2x versions, and capsules only (no screenshots). ja / en / zh keep their full sets.
 
 capsules     The dev capsule renderer (src/tools/capsules.ts) drawn per language in a real browser — logo,
              chip and font change, the art stays. Steam's current sizes are rendered natively and the older,
@@ -58,12 +62,15 @@ class Lang:
     game: str  # the game's own language code (localStorage adb.lang)
     steam: str  # Steam's language API name (file suffix)
     title: str
+    standard_only: bool = False  # only the standard Steamworks sizes (no 2x, no extras), capsules only
 
 
 LANGS = {
     'ja': Lang('ja', 'ja', 'japanese', 'AIお絵描きバスター'),
     'en': Lang('en', 'en', 'english', 'AI Quick Draw Buster'),
     'zh': Lang('zh', 'zh-CN', 'schinese', 'AI涂鸦大破解'),
+    'tc': Lang('tc', 'zh-TW', 'tchinese', 'AI塗鴉大破解', standard_only=True),
+    'ko': Lang('ko', 'ko', 'koreana', 'AI 낙서 버스터', standard_only=True),  # the title in ko.ts
 }
 
 # ---------------------------------------------------------------------------------------------
@@ -92,6 +99,18 @@ CAPSULE_FILES = [
     ('library', 'library_logo', 'library_logo', (1280, 720)),  # transparent PNG
 ]
 TRANSPARENT = {'library_logo'}
+
+# The eight standard sizes Steamworks asks for (folder, file stem, size); tc / ko output exactly these.
+STANDARD = {
+    ('store', 'capsule_header', (460, 215)),
+    ('store', 'capsule_small', (231, 87)),
+    ('store', 'capsule_main', (616, 353)),
+    ('store', 'capsule_vertical', (374, 448)),
+    ('store', 'page_background', (1438, 810)),
+    ('library', 'library_capsule', (600, 900)),
+    ('library', 'library_hero', (1920, 620)),
+    ('library', 'library_logo', (1280, 720)),
+}
 
 JS_CAPSULES = r"""
 async ({ lang, ids }) => {
@@ -140,6 +159,8 @@ async def capsules(browser, langs: list[Lang]) -> None:
         native = {cid: Image.open(io.BytesIO(base64.b64decode(b64))) for cid, b64 in images.items()}
         count = 0
         for folder, stem, cid, size in CAPSULE_FILES:
+            if lang.standard_only and (folder, stem, size) not in STANDARD:
+                continue
             img = native[cid]
             if img.size != size:
                 img = img.convert('RGBA').resize(size, Image.LANCZOS)
@@ -456,6 +477,8 @@ async def sudden_shot(c: Session) -> None:
 
 async def screenshots(browser, langs: list[Lang]) -> None:
     for lang in langs:
+        if lang.standard_only:
+            continue  # tc / ko: capsules only
         print(f'  {lang.key}: {lang.title}')
         c = Session(browser, lang)
         await solo_shots(c)
@@ -474,6 +497,8 @@ def verify(langs: list[Lang]) -> bool:
         print(f'\n[{lang.key}]  {lang.title}')
         for folder in ('store', 'screenshots', 'library'):
             d = OUT / lang.key / folder
+            if lang.standard_only and not d.exists():
+                continue  # capsules only for these languages
             files = sorted(p for p in d.rglob('*.png')) if d.exists() else []
             print(f'  {folder}/  ({len(files)} files)')
             for p in files:
@@ -518,7 +543,7 @@ async def run_browser(parts: list[str], langs: list[Lang]) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--only', help='comma-separated: capsules, screenshots')
-    ap.add_argument('--langs', help='comma-separated: ja, en, zh (default all)')
+    ap.add_argument('--langs', help='comma-separated: ja, en, zh, tc, ko (default all)')
     ap.add_argument('--verify-only', action='store_true', help='only re-check the files already written')
     args = ap.parse_args()
     parts = args.only.split(',') if args.only else ['capsules', 'screenshots']
