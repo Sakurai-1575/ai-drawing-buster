@@ -1,4 +1,4 @@
-# AIお絵描きバスター / AI Drawing Buster
+# AIお絵描きバスター / AI Quick Draw Buster
 
 Real-time sketch quiz: guess what the AI is drawing before the 10-second timer runs out.
 React 18 + TypeScript + Vite + Tailwind CSS. Sound effects are Web Audio oscillators and all drawings are code; the only asset files are the BGM tracks in `public/audio/bgm/` (see `src/audio/BgmManager.ts` for the track list and original titles).

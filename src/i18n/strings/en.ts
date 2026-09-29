@@ -1,7 +1,7 @@
 ﻿import type { Dict } from './ja';
 
 export const en: Dict = {
-  title: 'AI Drawing Buster',
+  title: 'AI Quick Draw Buster',
   tagline: 'Guess what the AI is drawing — faster than anyone!',
   start: 'Start',
   startKeys: '(Space / Enter)',
