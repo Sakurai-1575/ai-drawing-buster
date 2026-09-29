@@ -10,7 +10,7 @@ import { MascotCommentator } from './MascotCommentator';
 import { TopBar } from './TopBar';
 
 const CANVAS_SIZE = 440;
-/** Answers faster than this (remaining time) get the top-tier "GOD SPEED" banner instead of "CRITICAL". */
+/** Answers faster than this (remaining time) get the top-tier banner (`t.godSpeed`: LIGHTNING FAST!! / 神速!!) instead of "CRITICAL". */
 const GOD_SPEED_REMAINING_MS = 8_500;
 
 interface Props {
@@ -193,7 +193,7 @@ export function GameScreen({ state, t, lang, scale, onAnswer, onPause }: Props) 
       {state.intro > 0 && <IntroOverlay go={state.intro <= INTRO_GO_MS} paused={state.paused} />}
       {panic && <div className="danger-vignette pointer-events-none absolute inset-0 z-30" />}
       {state.round === 'correct' && state.lastCritical && (
-        <CriticalBurst key={state.critId} label={godSpeed ? '⚡ GOD SPEED!!' : '💥 CRITICAL!!'} points={state.lastPoints} />
+        <CriticalBurst key={state.critId} label={godSpeed ? `⚡ ${t.godSpeed}` : '💥 CRITICAL!!'} points={state.lastPoints} />
       )}
       <Confetti burst={state.confettiId} />
       <div ref={redFlashRef} className="pointer-events-none absolute inset-0 z-50 bg-rose-600 opacity-0" />
@@ -316,7 +316,7 @@ function IntroOverlay({ go, paused }: { go: boolean; paused: boolean }) {
 
 const RAYS_MASK = 'radial-gradient(circle, black 20%, transparent 65%)';
 
-/** Screen-center GOD SPEED / CRITICAL banner with sun rays and a floating score. */
+/** Screen-center top-tier (`t.godSpeed`) / CRITICAL banner with sun rays and a floating score. */
 function CriticalBurst({ label, points }: { label: string; points: number }) {
   return (
     <div className="pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center">
@@ -328,7 +328,7 @@ function CriticalBurst({ label, points }: { label: string; points: number }) {
           WebkitMaskImage: RAYS_MASK,
         }}
       />
-      <div className="animate-crit-bounce relative whitespace-nowrap rounded-3xl border-[6px] border-slate-900 bg-gradient-to-b from-amber-300 via-yellow-300 to-orange-400 px-10 py-3 text-[88px] font-black italic leading-none text-white shadow-[10px_10px_0px_#0f172a] [-webkit-text-stroke:4px_#0f172a] [paint-order:stroke_fill]">
+      <div className={`animate-crit-bounce relative whitespace-nowrap rounded-3xl border-[6px] border-slate-900 bg-gradient-to-b from-amber-300 via-yellow-300 to-orange-400 px-10 py-3 ${label.length > 14 ? 'text-[66px]' : 'text-[88px]'} font-black italic leading-none text-white shadow-[10px_10px_0px_#0f172a] [-webkit-text-stroke:4px_#0f172a] [paint-order:stroke_fill]`}>
         {label}
       </div>
       <div className="animate-score-float relative mt-5 text-7xl font-black tabular-nums text-amber-300 [-webkit-text-stroke:4px_#0f172a] [paint-order:stroke_fill] [text-shadow:6px_6px_0_#0f172a]">

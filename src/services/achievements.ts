@@ -60,7 +60,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'PERFECT_RUN',
     icon: '💎',
-    title: { ja: '騙されない心', en: 'Unfooled', 'zh-CN': '火眼金睛', 'zh-TW': '火眼金睛', ko: '속지 않는 눈' },
+    title: { ja: '騙されない心', en: "Can't Fool Me", 'zh-CN': '火眼金睛', 'zh-TW': '火眼金睛', ko: '속지 않는 눈' },
     description: {
       ja: 'スコアアタック（10問）をノーミスでクリアする',
       en: 'Clear Score Attack with no misses',
@@ -144,7 +144,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'RAPID_MASTER',
     icon: '🚀',
-    title: { ja: '音速の回答マシン', en: 'Sonic Answer Machine', 'zh-CN': '音速答题机', 'zh-TW': '音速答題機', ko: '음속의 정답 머신' },
+    title: { ja: '音速の回答マシン', en: 'Sonic Solver', 'zh-CN': '音速答题机', 'zh-TW': '音速答題機', ko: '음속의 정답 머신' },
     description: {
       ja: 'タイムアタックで30問以上正解する',
       en: 'Get 30 or more correct in Time Attack',
