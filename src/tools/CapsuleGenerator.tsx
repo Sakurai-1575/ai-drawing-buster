@@ -5,6 +5,7 @@ import {
   JPEG_QUALITY,
   capsuleFilename,
   capsuleMime,
+  loadCapsuleArt,
   renderCapsule,
   type CapsuleGroup,
   type CapsuleSpec,
@@ -45,8 +46,8 @@ export default function CapsuleGenerator({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     let cancelled = false;
-    // Make sure the logo font is resolved before rasterizing text.
-    void document.fonts.ready.then(() => {
+    // Make sure the logo font and Buster-kun's art are ready before rasterizing.
+    void Promise.all([document.fonts.ready, loadCapsuleArt()]).then(() => {
       if (cancelled) return;
       for (const spec of CAPSULES) {
         const canvas = canvases.current[spec.id];

@@ -1,4 +1,4 @@
-# PROJECT_CONTEXT — AIお絵描きバスター / AI Drawing Buster
+# PROJECT_CONTEXT — AIお絵描きバスター / AI Quick Draw Buster
 
 > **このファイルの目的**：他のAI・外部ツール・協力者に最初に読ませるだけで、ゲームの全体像（コンセプト／ルール／技術構成／キャラクター／現状／マーケ方針）を把握できるようにするための概要レポート。
 > **最終更新**：2026-09-28（リリース前最終アップデート：オンライン対戦を最大8人に拡張）
@@ -27,14 +27,14 @@
 | 言語 | タイトル | タグライン |
 | --- | --- | --- |
 | 日本語（原語・**正式名称**） | **AIお絵描きバスター** | AIが描く線画を、誰よりも早く当てろ！ |
-| English | **AI Drawing Buster** | Guess what the AI is drawing — faster than anyone! |
+| English | **AI Quick Draw Buster** | Guess what the AI is drawing — faster than anyone! |
 | 简体中文 | AI涂鸦大破解 | 抢在所有人前面，猜出AI画的是啥！ |
 | 繁體中文 | AI塗鴉大破解 | 搶在所有人前面，猜出AI在畫什麼！ |
 | 한국어 | AI 낙서 버스터 | AI가 그리는 그림, 누구보다 빨리 맞혀라! |
 
 - タイトル画面のバッジ：`REAL-TIME SKETCH QUIZ`
 - SNS用キャッチ：`AIの落書きを最速で見抜くニャ！🐈`
-- ⚠️ **英語タイトルの表記揺れ**：ゲーム内UIは `AI Drawing Buster`、Steamカプセル生成ツール（`src/tools/capsules.ts`）は `AI Quick Draw Buster`。**正式英語名は未確定**なので、外部向け文章を作る際は要確認。
+- ✅ **英語タイトルは `AI Quick Draw Buster` に統一済み**（2026-09-29）：ゲーム内の英語UI（`src/i18n/strings/en.ts` の `title`。ブラウザのタブ名にも反映）、Steamストア用の画像・ロゴ、README、本書で同一。以前の `AI Drawing Buster` は使わない。簡体字は既存のゲーム内タイトル `AI涂鸦大破解` に統一。英語のロゴは20文字と長いため、タイトル画面では小さめの字（`TitleScreen.tsx` の2段階の縮小）で表示。
 
 ---
 
@@ -266,13 +266,14 @@ public/audio/bgm/               BGM mp3
 - バスターくんのキャラクター（8表情・全言語セリフ・プロフィール画面）
 - Web版（Vercel）デプロイ
 - Steamストア／ライブラリ用画像の自動生成ツール（メイン 1232×706、ヘッダー 920×430、小型 462×174、垂直 748×896、ライブラリ 600×900／ヘッダー／ヒーロー／ロゴ、アイコン類）
+- **Steam用グラフィックの3言語版**（ja / en / zh）：`scripts/generate_steam_assets_i18n.py` が `promo_assets/steam_assets/<言語>/{store,screenshots,library}/` に93ファイルを出力。ファイル名末尾に Steam の言語名（`_japanese` / `_english` / `_schinese`）。カプセルは Steam 現行サイズと旧サイズ（2倍縮小）の両方、スクリーンショットは各言語のUIで実プレイを撮影（キャプション付き＋無加工の `clean/`、各8枚）。カプセル描画は `src/tools/capsules.ts`（`setCapsuleLang`）。
 - SNS用画像生成スクリプト（プロフィールアイコン 1024×1024、Xヘッダー 1500×500、YouTubeバナー 2048×1152）
 
 ### 6.3 未完成・TODO・既知の課題
 - **グローバルランキング**：UIに「Coming Soon」のみ（サーバーがないため未実装）
 - **Steam対応**：`src-tauri/` 未生成（Tauri未初期化）、Steamworks の実績連携はフック（`window.__STEAMWORKS__`）の TODO のみ
 - **BGMクレジット**：6曲中4曲の作曲者が未確認（2026-09-28 に「ターイムアタッーク！」を削除済み）
-- **英語タイトル**：`AI Drawing Buster` と `AI Quick Draw Buster` の表記揺れ
+- **多言語ストア文言**：スクリーンショットの英語・簡体字キャプションは新規に書き起こした文言（ネイティブ確認が望ましい）
 - **オンラインの接続性**：TURNサーバーなし、公開PeerServer依存。8人時はホストの回線・端末に負荷が集中する（スター型のため）
 - 開発時のみ：ロビー表示中に Vite の HMR（ホットリロード）が走るとルーム接続が無効になることがある（本番ビルドには影響なし。ページを再読み込みして作り直す）
 - `scripts/generate_sns_assets.py` は未コミット

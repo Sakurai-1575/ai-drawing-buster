@@ -1,11 +1,18 @@
 ﻿/**
  * Steam store capsule art, rendered from the game's own design language (cream dot paper,
- * comic 3D logo, sketch cards, pencil) straight onto canvases at exact pixel sizes.
- * Dev-only tool — see CapsuleGenerator.
+ * comic 3D logo, sketch cards, pencil, Buster-kun) straight onto canvases at exact pixel sizes.
+ * Dev-only tool — see CapsuleGenerator (and scripts/generate_steam_assets.py, which drives it).
+ *
+ * Steam capsule rules: game art + the game's name only — no taglines, quotes, scores or feature text.
+ * "Up to 8 players" is therefore shown as art (8 player-colored buzzer lamps), not written.
  */
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { PENCIL } from '../art/pencil';
 import { PAD_RATIO, buildPath, drawPartial } from '../art/strokePath';
+import { MascotCharacter } from '../components/MascotCharacter';
 import { QUIZZES, type Quiz } from '../data/quizzes';
+import type { MascotExpression } from '../mascotLines';
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -29,14 +36,60 @@ const ROSE = '#e11d48';
 const YELLOW = '#fcd34d';
 const SKY = '#7dd3fc';
 const BUBBLE = '#bae6fd';
-const FONT = '"Hiragino Maru Gothic ProN", "BIZ UDPGothic", "Yu Gothic UI", Meiryo, system-ui, sans-serif';
-const EN_TITLE = 'AI Quick Draw Buster';
-const TITLE_1 = 'AIお絵描き';
-const TITLE_2 = 'バスター';
+
+// ---------------------------------------------------------------- languages
+// Steam store art is localized per language: the logo, the chip under it and the font. The art itself
+// (sketch cards, Buster-kun, lamps) is language-independent. Titles: ja/zh are the game's own UI titles
+// (src/i18n/strings/ja.ts, zh-CN.ts); en is "AI Quick Draw Buster" (the game's English title too, src/i18n/strings/en.ts).
+
+export type CapsuleLang = 'ja' | 'en' | 'zh';
+
+interface Copy {
+  line1: string;
+  line2: string;
+  /** Between the two lines when they are set on one row. */
+  join: string;
+  chip: string;
+  font: string;
+}
+
+const COPY: Record<CapsuleLang, Copy> = {
+  ja: {
+    line1: 'AIお絵描き',
+    line2: 'バスター',
+    join: '',
+    chip: 'AI Quick Draw Buster',
+    font: '"Hiragino Maru Gothic ProN", "BIZ UDPGothic", "Yu Gothic UI", Meiryo, system-ui, sans-serif',
+  },
+  en: {
+    line1: 'AI Quick Draw',
+    line2: 'Buster',
+    join: ' ',
+    chip: 'REAL-TIME SKETCH QUIZ',
+    font: '"Segoe UI Black", "Arial Black", "Hiragino Maru Gothic ProN", "BIZ UDPGothic", system-ui, sans-serif',
+  },
+  zh: {
+    line1: 'AI涂鸦',
+    line2: '大破解',
+    join: '',
+    chip: 'REAL-TIME SKETCH QUIZ',
+    font: '"Yuanti SC", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif',
+  },
+};
+
+let capsuleLang: CapsuleLang = 'ja';
+/** Choose the language the next renderCapsule calls draw in (default ja). */
+export function setCapsuleLang(lang: CapsuleLang): void {
+  capsuleLang = lang;
+}
+const copy = () => COPY[capsuleLang];
+
+/** The online seats' colors, in join order (multiplayer/shared.tsx PLAYER_COLORS, Tailwind *-300). */
+const PLAYER_HEX = ['#fda4af', '#7dd3fc', '#6ee7b7', '#fcd34d', '#c4b5fd', '#fdba74', '#bef264', '#f9a8d4'];
 
 const deg = (d: number) => (d * Math.PI) / 180;
 const quiz = (id: string): Quiz => QUIZZES.find((q) => q.id === id) ?? QUIZZES[0];
-const font = (size: number) => `900 ${size}px ${FONT}`;
+const font = (size: number) => `900 ${size}px ${copy().font}`;
 
 // ---------------------------------------------------------------- primitives
 
@@ -455,8 +508,92 @@ function titleBlock(ctx: Ctx, cx: number, y1: number, y2: number, s1: number, s2
   ctx.translate(cx, (y1 + y2) / 2);
   ctx.rotate(deg(rot));
   const mid = (y1 + y2) / 2;
-  logoLine(ctx, [{ text: TITLE_1, fill: '#fff' }], 0, y1 - mid, s1, maxWidth);
-  logoLine(ctx, [{ text: TITLE_2, fill: YELLOW }], 0, y2 - mid, s2, maxWidth);
+  logoLine(ctx, [{ text: copy().line1, fill: '#fff' }], 0, y1 - mid, s1, maxWidth);
+  logoLine(ctx, [{ text: copy().line2, fill: YELLOW }], 0, y2 - mid, s2, maxWidth);
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------- Buster-kun
+
+type MascotVariant = 'full' | 'head';
+const mascotArt = new Map<string, HTMLImageElement>();
+/** Padding around the SVG's viewBox so the tail, pencil and outline aren't clipped when rasterized. */
+const MASCOT_PAD = 8;
+
+/**
+ * Rasterizes the game's own MascotCharacter (the same SVG as in-game) for the expressions the layouts
+ * use. Must be awaited before rendering; layouts skip Buster-kun if an image isn't ready.
+ */
+export async function loadCapsuleArt(): Promise<void> {
+  const wanted: [MascotExpression, MascotVariant][] = [
+    ['wink', 'full'],
+    ['smug', 'full'],
+    ['panic', 'full'],
+    ['laugh', 'full'],
+    ['wink', 'head'],
+  ];
+  await Promise.all(
+    wanted.map(async ([expression, variant]) => {
+      const key = `${expression}/${variant}`;
+      if (mascotArt.has(key)) return;
+      let svg = renderToStaticMarkup(createElement(MascotCharacter, { expression, variant, animated: false, size: 1000 }));
+      svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+      // Pad the viewBox, and give the image an intrinsic size with exactly that aspect (16 px per unit).
+      let box = [0, 0, 0, 0];
+      svg = svg.replace(/viewBox="([\d.-]+) ([\d.-]+) ([\d.-]+) ([\d.-]+)"/, (_, x, y, w, h) => {
+        box = [+x - MASCOT_PAD, +y - MASCOT_PAD, +w + MASCOT_PAD * 2, +h + MASCOT_PAD * 2];
+        return `viewBox="${box.join(' ')}"`;
+      });
+      svg = svg.replace(/ width="[\d.]+"/, ` width="${box[2] * 16}"`).replace(/ height="[\d.]+"/, ` height="${box[3] * 16}"`);
+      const img = new Image();
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      await img.decode();
+      mascotArt.set(key, img);
+    }),
+  );
+}
+
+/** Buster-kun centered on (cx, cy), `height` px tall, with the in-game ink drop shadow. */
+function mascot(ctx: Ctx, expression: MascotExpression, cx: number, cy: number, height: number, rot = 0, variant: MascotVariant = 'full') {
+  const img = mascotArt.get(`${expression}/${variant}`);
+  if (!img) return;
+  const [vw, vh] = variant === 'head' ? [112, 98] : [120, 132];
+  const h = height * ((vh + MASCOT_PAD * 2) / vh);
+  const w = h * ((vw + MASCOT_PAD * 2) / (vh + MASCOT_PAD * 2));
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(deg(rot));
+  ctx.shadowColor = INK;
+  ctx.shadowOffsetX = height * 0.024;
+  ctx.shadowOffsetY = height * 0.024;
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  ctx.restore();
+}
+
+/** A row of 8 buzzer lamps in the online players' colors — "up to 8 players", said with art. */
+function playerLamps(ctx: Ctx, cx: number, cy: number, r: number, gap: number, rot = 0) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(deg(rot));
+  const x0 = -((PLAYER_HEX.length - 1) * gap) / 2;
+  PLAYER_HEX.forEach((color, i) => {
+    const x = x0 + i * gap;
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.arc(x + r * 0.2, r * 0.2, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = Math.max(2, r * 0.22);
+    ctx.strokeStyle = INK;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.3, -r * 0.35, r * 0.32, r * 0.2, deg(-30), 0, Math.PI * 2);
+    ctx.fill();
+  });
   ctx.restore();
 }
 
@@ -467,9 +604,10 @@ function mainCapsule(ctx: Ctx) {
   const h = 706;
   background(ctx, w, h, w / 2, 250);
 
-  sketchCard(ctx, { cx: 245, cy: 600, size: 250, rot: -9, quiz: quiz('cat'), progress: 1 });
-  sketchCard(ctx, { cx: 987, cy: 600, size: 250, rot: 9, quiz: quiz('airplane'), progress: 1 });
-  sketchCard(ctx, { cx: 616, cy: 592, size: 290, rot: 2, quiz: quiz('icecream'), progress: 0.62, withPencil: true });
+  sketchCard(ctx, { cx: 150, cy: 610, size: 230, rot: -10, quiz: quiz('cat'), progress: 1 });
+  sketchCard(ctx, { cx: 1112, cy: 606, size: 230, rot: 9, quiz: quiz('airplane'), progress: 1 });
+  sketchCard(ctx, { cx: 440, cy: 588, size: 290, rot: -3, quiz: quiz('icecream'), progress: 0.62, withPencil: true });
+  mascot(ctx, 'wink', 790, 588, 330, 3);
 
   ctx.save();
   ctx.translate(w / 2, 235);
@@ -477,8 +615,8 @@ function mainCapsule(ctx: Ctx) {
   logoLine(
     ctx,
     [
-      { text: TITLE_1, fill: '#fff' },
-      { text: TITLE_2, fill: YELLOW },
+      { text: copy().line1 + copy().join, fill: '#fff' },
+      { text: copy().line2, fill: YELLOW },
     ],
     0,
     0,
@@ -486,7 +624,7 @@ function mainCapsule(ctx: Ctx) {
     980,
   );
   ctx.restore();
-  chip(ctx, EN_TITLE, w / 2, 385, 40, SKY, 2);
+  chip(ctx, copy().chip, w / 2, 385, 40, SKY, 2);
 
   mark(ctx, '?', 72, 130, 110, '#fff', -14);
   mark(ctx, '!', 1168, 120, 110, YELLOW, 12);
@@ -500,11 +638,12 @@ function headerCapsule(ctx: Ctx) {
   const h = 430;
   background(ctx, w, h, 610, 190);
 
-  sketchCard(ctx, { cx: 185, cy: 230, size: 290, rot: -6, quiz: quiz('icecream'), progress: 0.65, withPencil: true });
-  bubble(ctx, '？？？', 140, 68, 26, -5);
+  sketchCard(ctx, { cx: 175, cy: 222, size: 280, rot: -6, quiz: quiz('icecream'), progress: 0.65, withPencil: true });
+  mascot(ctx, 'smug', 332, 330, 190, 4);
+  bubble(ctx, '？？？', 130, 62, 26, -5);
 
   titleBlock(ctx, 640, 130, 245, 100, 120, 470, -4);
-  chip(ctx, EN_TITLE, 640, 360, 30, SKY, 2);
+  chip(ctx, copy().chip, 640, 360, 30, SKY, 2);
 
   sparkle(ctx, 395, 385, 18, YELLOW);
   sparkle(ctx, 885, 330, 14);
@@ -516,8 +655,8 @@ function smallCapsule(ctx: Ctx) {
   const h = 174;
   background(ctx, w, h);
 
-  titleBlock(ctx, 231, 52, 120, 60, 74, 330, -2);
-  pencil(ctx, 412, 152, 48);
+  titleBlock(ctx, 214, 52, 120, 60, 74, 330, -2);
+  mascot(ctx, 'wink', 418, 116, 92, 6, 'head');
 }
 
 function verticalCapsule(ctx: Ctx) {
@@ -526,13 +665,14 @@ function verticalCapsule(ctx: Ctx) {
   background(ctx, w, h, w / 2, 230);
 
   titleBlock(ctx, w / 2, 145, 285, 124, 156, 660, -4);
-  chip(ctx, EN_TITLE, w / 2, 425, 36, SKY, 2);
+  chip(ctx, copy().chip, w / 2, 425, 36, SKY, 2);
 
-  sketchCard(ctx, { cx: w / 2 + 10, cy: 675, size: 380, rot: -3, quiz: quiz('cat'), progress: 0.72, withPencil: true });
-  bubble(ctx, 'なにを描いてる？', 205, 500, 30, -6);
+  playerLamps(ctx, w / 2, 490, 17, 50, -2);
+  sketchCard(ctx, { cx: 300, cy: 690, size: 340, rot: -4, quiz: quiz('cat'), progress: 0.72, withPencil: true });
+  mascot(ctx, 'wink', 575, 735, 300, 5);
+  bubble(ctx, '？？？', 600, 560, 30, 6);
 
-  mark(ctx, '?', 645, 530, 110, '#fff', 14);
-  mark(ctx, '!', 90, 790, 90, YELLOW, -12);
+  mark(ctx, '!', 90, 845, 80, YELLOW, -12);
   sparkle(ctx, 70, 460, 22, YELLOW);
   sparkle(ctx, 690, 420, 18);
   sparkle(ctx, 660, 850, 24, YELLOW);
@@ -544,13 +684,13 @@ function libraryCapsule(ctx: Ctx) {
   background(ctx, w, h, w / 2, 220);
 
   titleBlock(ctx, w / 2, 145, 265, 104, 132, 530, -4);
-  chip(ctx, EN_TITLE, w / 2, 385, 28, SKY, 2);
+  chip(ctx, copy().chip, w / 2, 385, 28, SKY, 2);
 
-  sketchCard(ctx, { cx: w / 2 + 8, cy: 655, size: 350, rot: -3, quiz: quiz('icecream'), progress: 0.65, withPencil: true });
-  bubble(ctx, 'なにを描いてる？', 165, 470, 24, -6);
-  crayon(ctx, 505, 855, 190, -28, '#fb7185');
-
-  mark(ctx, '?', 530, 490, 90, '#fff', 14);
+  playerLamps(ctx, w / 2, 452, 13, 40, -2);
+  sketchCard(ctx, { cx: 230, cy: 650, size: 300, rot: -4, quiz: quiz('icecream'), progress: 0.65, withPencil: true });
+  mascot(ctx, 'smug', 455, 720, 270, 5);
+  bubble(ctx, '？？？', 470, 540, 24, 6);
+  crayon(ctx, 150, 860, 170, -20, '#fb7185');
   sparkle(ctx, 60, 420, 18, YELLOW);
   sparkle(ctx, 555, 360, 14);
   sparkle(ctx, 70, 840, 20, YELLOW);
@@ -585,16 +725,17 @@ function libraryHero(ctx: Ctx) {
   squiggle(ctx, 2380, 880, 280, 90, '#38bdf8', 9, 4);
   squiggle(ctx, 2020, 90, 240, 70, '#f59e0b', 8, 3);
 
-  // Center safe area (1490–2350 × 430–810): the hero sketch being drawn, flanked by crayons.
-  sketchCard(ctx, { cx: w / 2, cy: h / 2, size: 340, rot: -3, quiz: quiz('cat'), progress: 0.72, withPencil: true });
-  crayon(ctx, 1600, 640, 300, -62, '#fb7185');
-  crayon(ctx, 2250, 590, 300, -118, '#fcd34d');
+  // Center safe area (1490–2350 × 430–810): Buster-kun at his sketch — everything that matters is in here.
+  sketchCard(ctx, { cx: 1745, cy: 622, size: 300, rot: -4, quiz: quiz('cat'), progress: 0.72, withPencil: true });
+  mascot(ctx, 'wink', 2130, 622, 350, 3);
+  // Outside it: the 8 online seats as buzzer lamps.
+  playerLamps(ctx, w / 2, 900, 26, 76, -1);
 
   const sparkles: [number, number, number, string][] = [
-    [1560, 440, 30, YELLOW],
-    [2290, 800, 26, '#fff'],
-    [1450, 800, 22, '#fff'],
-    [2400, 400, 24, YELLOW],
+    [1545, 452, 26, YELLOW],
+    [2320, 470, 22, '#fff'],
+    [1430, 820, 22, '#fff'],
+    [2420, 800, 24, YELLOW],
     [640, 600, 26, YELLOW],
     [3180, 700, 28, '#fff'],
     [1700, 180, 22, '#fff'],
@@ -605,11 +746,88 @@ function libraryHero(ctx: Ctx) {
   for (const [x, y, r, c] of sparkles) sparkle(ctx, x, y, r, c);
 }
 
+/**
+ * 1438×810 store page background: no text, low contrast — Steam's page content sits on top. A dim
+ * retro-PC grid with faint sketches from the quizzes, fading to Steam's navy toward the edges.
+ */
+function pageBackground(ctx: Ctx) {
+  const w = 1438;
+  const h = 810;
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, '#1c2b44');
+  base.addColorStop(1, '#16223a');
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+
+  // Graph-paper grid, like the in-game canvas but inverted and dim.
+  ctx.strokeStyle = 'rgba(148, 197, 253, 0.07)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0.5; x < w; x += 24) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+  }
+  for (let y = 0.5; y < h; y += 24) {
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(148, 197, 253, 0.1)';
+  ctx.beginPath();
+  for (let x = 0.5; x < w; x += 120) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+  }
+  for (let y = 0.5; y < h; y += 120) {
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+  }
+  ctx.stroke();
+
+  // Ghost sketches (the quiz strokes, as chalk), kept toward the sides where store content is thinner.
+  const ghosts: [string, number, number, number, number][] = [
+    ['cat', 150, 170, 240, -8],
+    ['icecream', 1290, 150, 220, 7],
+    ['airplane', 120, 610, 230, 6],
+    ['apple', 1310, 620, 210, -6],
+    ['umbrella', 470, 90, 150, 5],
+    ['fish', 980, 730, 170, -4],
+  ];
+  for (const [id, cx, cy, size, rot] of ghosts) {
+    const path = buildPath(quiz(id).strokes);
+    const pad = size * PAD_RATIO;
+    const inner = size - pad * 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(deg(rot));
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.085)';
+    ctx.lineWidth = size * 0.022;
+    drawPartial(ctx, path, path.total, ([x, y]) => [-size / 2 + pad + x * inner, -size / 2 + pad + y * inner]);
+    ctx.restore();
+  }
+
+  // Scanlines, then fade every edge into Steam's page navy.
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+  for (let y = 0; y < h; y += 4) ctx.fillRect(0, y, w, 1);
+  const vignette = ctx.createRadialGradient(w / 2, h * 0.42, h * 0.25, w / 2, h / 2, w * 0.62);
+  vignette.addColorStop(0, 'rgba(27, 40, 56, 0)');
+  vignette.addColorStop(1, 'rgba(27, 40, 56, 0.92)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, w, h);
+  const bottom = ctx.createLinearGradient(0, h * 0.7, 0, h);
+  bottom.addColorStop(0, 'rgba(27, 40, 56, 0)');
+  bottom.addColorStop(1, 'rgba(27, 40, 56, 1)');
+  ctx.fillStyle = bottom;
+  ctx.fillRect(0, h * 0.7, w, h * 0.3);
+}
+
 /** 1280×720 transparent logo (overlaid on the hero). */
 function libraryLogo(ctx: Ctx) {
   const w = 1280;
   titleBlock(ctx, w / 2, 250, 430, 170, 214, 1140, -4);
-  chip(ctx, EN_TITLE, w / 2, 590, 44, SKY, 2);
+  chip(ctx, copy().chip, w / 2, 590, 44, SKY, 2);
   sparkle(ctx, 110, 150, 34, YELLOW);
   sparkle(ctx, 1180, 520, 28, '#fff');
 }
@@ -643,6 +861,15 @@ export const CAPSULES: CapsuleSpec[] = [
   { id: 'header_capsule', group: 'store', label: 'ヘッダーカプセル / Header Capsule', width: 920, height: 430, render: headerCapsule },
   { id: 'small_capsule', group: 'store', label: '小型カプセル / Small Capsule', width: 462, height: 174, render: smallCapsule },
   { id: 'vertical_capsule', group: 'store', label: '垂直カプセル / Vertical Capsule', width: 748, height: 896, render: verticalCapsule },
+  {
+    id: 'page_background',
+    group: 'store',
+    label: 'ストア背景 / Page Background',
+    width: 1438,
+    height: 810,
+    note: '文字なし・低コントラスト。端はSteamの紺に馴染ませる',
+    render: pageBackground,
+  },
   { id: 'library_capsule', group: 'library', label: 'ライブラリカプセル / Library Capsule', width: 600, height: 900, render: libraryCapsule },
   {
     id: 'library_header',
