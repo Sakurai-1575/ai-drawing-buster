@@ -10,7 +10,7 @@ Steam store / screenshot / library graphics in five languages (ja, en, zh, tc, k
 tc and ko output only the sizes the Steamworks page needs, and the store capsules at the sizes Steam has registered
 for ja / en / zh (920x430 header, 462x174 small, 1232x706 main, 748x896 vertical, 1438x810 page background):
 a different size for the same slot in another language is rejected on upload. Plus the library capsule (600x900),
-hero (1920x620) and logo (1280x720). Capsules only (no screenshots). ja / en / zh keep their full sets.
+hero (1920x620) and logo (1280x720). All five languages get the eight screenshots (with and without caption).
 
 capsules     The dev capsule renderer (src/tools/capsules.ts) drawn per language in a real browser — logo,
              chip and font change, the art stays. the sizes Steam has registered are rendered natively (no 1x / older sizes are written any more).
@@ -172,12 +172,14 @@ async def capsules(browser, langs: list[Lang]) -> None:
 # Screenshots
 # ---------------------------------------------------------------------------------------------
 
-GAME_TITLE = {'ja': 'AIお絵描きバスター', 'en': 'AI Quick Draw Buster', 'zh-CN': 'AI涂鸦大破解'}  # the game's own UI titles (= the store names)
-HOST_NAME = {'ja': 'バスター使い', 'en': 'BusterFan', 'zh': '破解达人'}
+GAME_TITLE = {'ja': 'AIお絵描きバスター', 'en': 'AI Quick Draw Buster', 'zh-CN': 'AI涂鸦大破解', 'zh-TW': 'AI塗鴉大破解', 'ko': 'AI 낙서 버스터'}  # the game's own UI titles (= the store names)
+HOST_NAME = {'ja': 'バスター使い', 'en': 'BusterFan', 'zh': '破解达人', 'tc': '破解達人', 'ko': '버스터왕'}
 BOT_NAMES = {
     'ja': ['ねこぱんち', 'らくがき職人', 'ミケ', 'ぴよたろう', 'Speedy', 'おえかき王', 'チーズ'],
     'en': ['NekoPunch', 'DoodlePro', 'Mike', 'Chick', 'Speedy', 'SketchKing', 'Cheese'],
     'zh': ['喵喵拳', '涂鸦高手', '小咪', '小鸡', '极速', '画王', '芝士'],
+    'tc': ['喵喵拳', '塗鴉高手', '小咪', '小雞', '極速', '畫王', '起司'],
+    'ko': ['냥펀치', '낙서장인', '미케', '삐약이', 'Speedy', '그림왕', '치즈'],
 }
 
 # (file number + name, caption key)
@@ -194,20 +196,22 @@ SHOTS = [
 # Every caption states something the game does: 500 quizzes, 15 achievements, 3 solo modes, up to 8 players,
 # Sudden Death speeding up to 1.5x. (The zh/en lines are new store copy: worth a native read-through.)
 CAPTIONS = {
-    'godspeed': {'ja': 'AIが描き終わる前に、最速で見抜け！', 'en': 'Beat the AI before it finishes drawing!', 'zh': '在AI画完之前，抢先猜出答案！'},
-    'mislead': {'ja': '最初の線はウソ！AIの罠にご用心', 'en': "The AI's first strokes are a trap!", 'zh': 'AI最初画的线条，其实是陷阱！'},
-    'modes': {'ja': '3つのソロモードで遊べる', 'en': 'Three solo modes to master', 'zh': '三种单人模式，任你挑战'},
-    'lobby': {'ja': '最大8人でオンライン対戦', 'en': 'Online battles for up to 8 players', 'zh': '最多8人同时在线对战'},
-    'race': {'ja': 'ミリ秒差を競う早押しバトル', 'en': 'Race to buzz in: every millisecond counts', 'zh': '毫秒之差决胜负的抢答大战'},
-    'sudden': {'ja': 'サドンデス：生き残るほどAIが加速', 'en': 'Sudden Death: the longer you last, the faster it gets', 'zh': '突然死亡：坚持越久，AI画得越快'},
-    'dex': {'ja': '全500問をバスター図鑑でコンプリート', 'en': 'Collect all 500 drawings in the Buster Dex', 'zh': '集齐图鉴中的全部500道题目'},
-    'achv': {'ja': 'やり込める実績が15個', 'en': '15 achievements to unlock', 'zh': '15项成就等你来解锁'},
+    'godspeed': {'ja': 'AIが描き終わる前に、最速で見抜け！', 'en': 'Beat the AI before it finishes drawing!', 'zh': '在AI画完之前，抢先猜出答案！', 'tc': '搶在AI畫完之前，率先猜出答案！', 'ko': 'AI가 다 그리기 전에 먼저 맞혀라!'},
+    'mislead': {'ja': '最初の線はウソ！AIの罠にご用心', 'en': "The AI's first strokes are a trap!", 'zh': 'AI最初画的线条，其实是陷阱！', 'tc': 'AI最初畫的線條，其實是陷阱！', 'ko': 'AI의 첫 획은 함정이다!'},
+    'modes': {'ja': '3つのソロモードで遊べる', 'en': 'Three solo modes to master', 'zh': '三种单人模式，任你挑战', 'tc': '三種單人模式，任你挑戰', 'ko': '세 가지 솔로 모드로 즐겨요'},
+    'lobby': {'ja': '最大8人でオンライン対戦', 'en': 'Online battles for up to 8 players', 'zh': '最多8人同时在线对战', 'tc': '最多8人同時線上對戰', 'ko': '최대 8명이 함께하는 온라인 대전'},
+    'race': {'ja': 'ミリ秒差を競う早押しバトル', 'en': 'Race to buzz in: every millisecond counts', 'zh': '毫秒之差决胜负的抢答大战', 'tc': '毫秒之差決勝負的搶答大戰', 'ko': '밀리초 차이로 갈리는 스피드 대결'},
+    'sudden': {'ja': 'サドンデス：生き残るほどAIが加速', 'en': 'Sudden Death: the longer you last, the faster it gets', 'zh': '突然死亡：坚持越久，AI画得越快', 'tc': '突然死亡：撐得越久，AI畫得越快', 'ko': '서든 데스: 오래 버틸수록 AI가 빨라진다'},
+    'dex': {'ja': '全500問をバスター図鑑でコンプリート', 'en': 'Collect all 500 drawings in the Buster Dex', 'zh': '集齐图鉴中的全部500道题目', 'tc': '集齊圖鑑中的全部500道題目', 'ko': '버스터 도감에서 500문제 전부 수집!'},
+    'achv': {'ja': 'やり込める実績が15個', 'en': '15 achievements to unlock', 'zh': '15项成就等你来解锁', 'tc': '15項成就等你來解鎖', 'ko': '도전할 만한 업적이 15개'},
 }
 
 CAPTION_FONTS = {
     'ja': [('C:/Windows/Fonts/BIZ-UDGothicB.ttc', 1)],
     'en': [('C:/Windows/Fonts/seguibl.ttf', 0), ('C:/Windows/Fonts/BIZ-UDGothicB.ttc', 1)],
     'zh': [('C:/Windows/Fonts/msyhbd.ttc', 0), ('C:/Windows/Fonts/BIZ-UDGothicB.ttc', 1)],
+    'tc': [('C:/Windows/Fonts/msjhbd.ttc', 0), ('C:/Windows/Fonts/BIZ-UDGothicB.ttc', 1)],
+    'ko': [('C:/Windows/Fonts/malgunbd.ttf', 0)],
 }
 INK = (15, 23, 42, 255)
 
@@ -474,8 +478,6 @@ async def sudden_shot(c: Session) -> None:
 
 async def screenshots(browser, langs: list[Lang]) -> None:
     for lang in langs:
-        if lang.standard_only:
-            continue  # tc / ko: capsules only
         print(f'  {lang.key}: {lang.title}')
         c = Session(browser, lang)
         await solo_shots(c)
@@ -494,8 +496,6 @@ def verify(langs: list[Lang]) -> bool:
         print(f'\n[{lang.key}]  {lang.title}')
         for folder in ('store', 'screenshots', 'library'):
             d = OUT / lang.key / folder
-            if lang.standard_only and not d.exists():
-                continue  # capsules only for these languages
             files = sorted(p for p in d.rglob('*.png')) if d.exists() else []
             print(f'  {folder}/  ({len(files)} files)')
             for p in files:

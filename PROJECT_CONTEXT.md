@@ -266,7 +266,7 @@ public/audio/bgm/               BGM mp3
 - バスターくんのキャラクター（8表情・全言語セリフ・プロフィール画面）
 - Web版（Vercel）デプロイ
 - Steamストア／ライブラリ用画像の自動生成ツール（メイン 1232×706、ヘッダー 920×430、小型 462×174、垂直 748×896、ライブラリ 600×900／ヘッダー／ヒーロー／ロゴ、アイコン類）
-- **Steam用グラフィックの5言語版**（ja / en / zh / tc / ko）：`scripts/generate_steam_assets_i18n.py` が `promo_assets/steam_assets/<言語>/{store,screenshots,library}/` に出力（ja / en / zh は93ファイル。tc / ko はカプセルのみ各8ファイル。ストア用5種は Steam に登録済みのサイズ（920×430 / 462×174 / 1232×706 / 748×896 / 1438×810）に完全一致させる：同じ枠に別サイズを上げるとアップロードエラーになる。ロゴはゲーム内タイトル：`AI塗鴉大破解` / `AI 낙서 버스터`）。ファイル名末尾に Steam の言語名（`_japanese` / `_english` / `_schinese`）。カプセルは Steam 現行サイズと旧サイズ（2倍縮小）の両方、スクリーンショットは各言語のUIで実プレイを撮影（キャプション付き＋無加工の `clean/`、各8枚）。カプセル描画は `src/tools/capsules.ts`（`setCapsuleLang`）。
+- **Steam用グラフィックの5言語版**（ja / en / zh / tc / ko）：`scripts/generate_steam_assets_i18n.py` が `promo_assets/steam_assets/<言語>/{store,screenshots,library}/` に出力（ja / en / zh は93ファイル。tc / ko はカプセル8ファイル＋スクリーンショット16ファイル（ja / en / zh と同じ構成）。ストア用5種は Steam に登録済みのサイズ（920×430 / 462×174 / 1232×706 / 748×896 / 1438×810）に完全一致させる：同じ枠に別サイズを上げるとアップロードエラーになる。ロゴはゲーム内タイトル：`AI塗鴉大破解` / `AI 낙서 버스터`）。ファイル名末尾に Steam の言語名（`_japanese` / `_english` / `_schinese`）。カプセルは Steam 現行サイズと旧サイズ（2倍縮小）の両方、スクリーンショットは各言語のUIで実プレイを撮影（キャプション付き＋無加工の `clean/`、各8枚）。カプセル描画は `src/tools/capsules.ts`（`setCapsuleLang`）。
 - SNS用画像生成スクリプト（プロフィールアイコン 1024×1024、Xヘッダー 1500×500、YouTubeバナー 2048×1152）
 
 ### 6.3 未完成・TODO・既知の課題
